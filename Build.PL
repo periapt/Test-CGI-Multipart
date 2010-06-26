@@ -9,10 +9,18 @@ my $builder = Module::Build->new(
     dist_version_from   => 'lib/Test/CGI/Multipart.pm',
     build_requires => {
         'Test::More' => 0,
-    }
+    },
     requires => {
         'version'    => 0,
     },
+    meta_merge => {
+        resources => {
+            repository =>
+                'http://github.com/periapt/Test-CGI-Multipart/tree',
+        },
+        keywords => [ 'Test', 'CGI', 'multipart/form-data' ],
+    },
+    create_makefile_pl => 'traditional',
     add_to_cleanup      => [ 'Test-CGI-Multipart-*' ],
 );
 
