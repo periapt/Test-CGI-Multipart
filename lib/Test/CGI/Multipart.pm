@@ -12,9 +12,15 @@ use version; our $VERSION = qv('0.0.1');
 
 sub new {
     my $class = shift;
-    my $self = {class_cgi=>"CGI"};
+    my $self = {
+        class_cgi=>"CGI",
+        params=>{},
+    };
     bless $self, $class;
     return $self;
+}
+
+sub set_param {
 }
 
 sub get_cgi {
@@ -35,8 +41,7 @@ __END__
 
 =head1 NAME
 
-Test::CGI::Multipart - [One line description of module's purpose here]
-
+Test::CGI::Multipart - Test posting of multi-part form data
 
 =head1 VERSION
 
@@ -50,17 +55,18 @@ This document describes Test::CGI::Multipart version 0.0.1
     my $tcm = Test::CGI::Multipart;
 
     # specify the form parameters
-    $tcm->param(email=>'jim@hacker.com');
-    $tcm->param(first_name=>'Jim');
-    $tcm->set_param(param=>'last_name',value=>'Hacker');
-    $tcm->upload_file(param=>'file1',file_name=>$file_made_earlier);
+    $tcm->set_param(email=>'jim@hacker.com');
+    $tcm->set_param(pets=> ['Rex', 'Oscar', 'Bidgie', 'Fish']);
+    $tcm->set_param(first_name=>'Jim');
+    $tcm->set_param(name=>'last_name',value=>'Hacker');
+    $tcm->upload_file(name=>'file1',file_name=>$file_made_earlier);
     $tcm->create_upload_file(
-        param=>'file2',
+        name=>'file2',
         file_name=>'mega.txt',
         size=>1_000_000
     );
     $tcm->create_upload_image(
-        param=>'file3',
+        name=>'file3',
         type=>'gif',
         # let's lie about the type to see if the code can spot it.
         file_name=>'my_image.jpg',
@@ -91,7 +97,7 @@ Several of the methods below take named parameters. For convenience we define th
 
 =over 
 
-=item param
+=item name
 
 This is the name of form parameter.
 
@@ -121,10 +127,6 @@ The type of image files.
 
 An instance of this class might best be thought of as a "CGI object factory".
 Currently the constructor takes no parameters.
-
-=head2 param
-
-This method has an interface designed to be completely analogous to the C<param>method in the L<CGI> and related class. The one argument form returns stashed parameters, the zero argument form returns all currently stashed values and all other forms stash parameters. Its use defines the template from which L<CGI> objects are created and suffices for all form parameters except those corresponding to a file upload control.
 
 =head2 get_cgi
 

@@ -6,6 +6,7 @@ MANIFEST
 README
 t/00.load.t
 t/01.basic.t
+t/02.param.t
 t/changes.t
 t/manifest.t
 t/perlcritic.t
