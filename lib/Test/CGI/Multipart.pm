@@ -34,6 +34,11 @@ sub get_param {
     return $self->{params}->{$params{name}};
 }
 
+sub get_names {
+    my $self = shift;
+    return keys %{$self->{params}};
+}
+
 sub get_cgi {
     my $self = shift;
     return $self->{class_cgi};
@@ -166,6 +171,10 @@ This can be used to set a single form parameter. It takes two named arguments C<
 =head2 get_param
 
 This retrieves a single form parameter. It takes a single named parameter: C<name>.
+
+=head2 get_names
+
+This returns a list of stashed parameter names.
 
 =head2 upload_file
 

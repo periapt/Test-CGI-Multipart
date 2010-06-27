@@ -14,6 +14,8 @@ my $builder = Module::Build->new(
         'version'    => 0,
         'UNIVERSAL::require' => 0,
         'CGI'   => 0,
+        'Readonly' => 0,
+        'Params::Validate'=>0,
     },
     meta_merge => {
         resources => {
