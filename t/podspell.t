@@ -15,52 +15,18 @@ if ( $EVAL_ERROR ) {
    plan( skip_all => $msg );
 }
 
-Test::Spelling::add_stopwords(qw(   ActionDispatch
-                                    Walde
+Test::Spelling::add_stopwords(qw(   
                                     CPAN
                                     Bamber
-                                    Cees
-                                    Hek
                                     github
                                     AnnoCPAN
                                     RT
                                     API
-                                    SiteSuite
-                                    crypted
-                                    SHA
-                                    CRC
-                                    DBD
-                                    DBH
+                                    param
                                     SQL
                                     DBI
-                                    username
-                                    usernames
-                                    CALLBACKS
-                                    CALLBACKS
                                     HTML
-                                    LDAP
-                                    RUNMODES
-                                    TODO
-                                    URL
-                                    CAPAUTHTOKEN
-                                    webserver
-                                    Hardcode
-                                    hardcode
-                                    everytime
-                                    initialize
-                                    authen
-                                    customizations
-                                    runmode
-                                    runmodes
-                                    prerun
-                                    pre
-                                    callback
-                                    callbacks
-                                    checkbox
-                                    customize
-                                    customized
-                                    desaturating
-                                    detaint
+                                    CGI
                                     URLs));
 Test::Spelling::all_pod_files_spelling_ok();
 

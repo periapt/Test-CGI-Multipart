@@ -24,8 +24,8 @@ sub get_cgi {
 
 sub create_cgi {
     my $self = shift;
-    $self->cgi_class->require;
-    my $cgi = $self->cgi_class->new;
+    $self->get_cgi->require;
+    my $cgi = $self->get_cgi->new;
     return $cgi;
 }
 
@@ -124,7 +124,7 @@ Currently the constructor takes no parameters.
 
 =head2 param
 
-This method has an interface designed to be completely analagous to the C<param>method in the L<CGI> and related class. The one argument form returns stashed parameters, the zero argument form returns all currently stashed values and all other forms stash parameters. Its use defines the template from which L<CGI> ojects are created and suffices for all form parameters except those corresponding toa file upload control.
+This method has an interface designed to be completely analogous to the C<param>method in the L<CGI> and related class. The one argument form returns stashed parameters, the zero argument form returns all currently stashed values and all other forms stash parameters. Its use defines the template from which L<CGI> objects are created and suffices for all form parameters except those corresponding to a file upload control.
 
 =head2 get_cgi
 
@@ -140,7 +140,7 @@ This returns a CGI object created according to the specification encapsulated in
 
 =item The environment variables are set locally.
 
-=item A pipe is created. The far end of the pipe is attached to our standad input.
+=item A pipe is created. The far end of the pipe is attached to our standard input.
 
 =item The CGI object is created and returned.
 

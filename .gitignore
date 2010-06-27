@@ -11,3 +11,4 @@ cover_db
 pod2htm*.tmp
 Test-CGI-Multipart-*
 MYMETA.yml
+*.bak

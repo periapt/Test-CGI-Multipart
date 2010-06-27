@@ -12,13 +12,15 @@ my $builder = Module::Build->new(
     },
     requires => {
         'version'    => 0,
+        'UNIVERSAL::require' => 0,
+        'CGI'   => 0,
     },
     meta_merge => {
         resources => {
             repository =>
                 'http://github.com/periapt/Test-CGI-Multipart/tree',
         },
-        keywords => [ 'Test', 'CGI', 'multipart/form-data' ],
+        keywords => [ 'Test', 'CGI', 'upload', 'image', 'multipart/form-data' ],
     },
     create_makefile_pl => 'traditional',
     add_to_cleanup      => [ 'Test-CGI-Multipart-*' ],
