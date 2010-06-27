@@ -1,7 +1,11 @@
-#!perl -wT
-use Test::More tests => 9;
+#!perl -w
+use Test::More tests => 12;
 use Test::CGI::Multipart;
 use Readonly;
+use lib qw(/home/nicholas/git/CGI.pm/lib);
+use CGI qw(read_multipart);
+CGI->compile();
+
 
 my $tcm = Test::CGI::Multipart->new;
 isa_ok($tcm, 'Test::CGI::Multipart', 'object created');
@@ -24,4 +28,12 @@ is($tcm->get_param(name=>'pets'), $PETS, 'get param');
 @names= sort $tcm->get_names;
 is_deeply(\@names, ['first_name','pets'], 'names deep');
 
-isa_ok($tcm->create_cgi, 'CGI', 'created CGI object okay');
+my $cgi = $tcm->create_cgi;
+isa_ok($cgi, 'CGI', 'created CGI object okay');
+
+@names = sort $cgi->param;
+is_deeply(\@names, ['first_name','pets'], 'names deep');
+foreach my $name (@names) {
+    is_deeply($cgi->param($name), $tcm->get_param(name=>$name), $name);
+}
+

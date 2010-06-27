@@ -46,9 +46,42 @@ sub get_cgi {
 
 sub create_cgi {
     my $self = shift;
+
+    my $mime = $self->_mime_data;
+    my $mime_string = $mime->stringify;
+    $mime_string =~ s{
+                        \n      # MIME::Tools returns this rather than CRLF
+                    }{\015\012}xmsg;
+    my $boundary = $mime->head->multipart_boundary;
+
+    local $ENV{REQUEST_METHOD}='POST';
+    local $ENV{CONTENT_TYPE}="multipart/form-data; boundary=$boundary";
+    local $ENV{CONTENT_LENGTH}=length($mime_string);
+
+    local *STDIN;
+    open(STDIN, '<', \$mime_string) or croak "could not open MIME handle";
+    binmode STDIN;
+
     $self->get_cgi->require;
     my $cgi = $self->get_cgi->new;
     return $cgi;
+}
+
+sub _mime_data {
+    my $self = shift;
+
+    use MIME::Entity;
+    my $mime = MIME::Entity->build(
+        'Type'=>"multipart/form-data",
+    );
+    foreach my $name ($self->get_names) {
+        $mime->attach(
+            'Content-Disposition'=>"form-data; name=\"$name\"",
+            Data=>$self->get_param(name=>$name),
+        );
+    }
+
+    return $mime;
 }
 
 
@@ -215,6 +248,8 @@ None reported.
 
 This software is not tested and does not yet contain enough functionality
 to meet even its most basic goals.
+
+It is now at the point where it actually needs to grapple with MIME.
 
 No bugs have been reported.
 
