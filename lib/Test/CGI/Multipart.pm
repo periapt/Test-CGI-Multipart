@@ -4,6 +4,7 @@ use warnings;
 use strict;
 use Carp;
 use UNIVERSAL::require;
+use Params::Validate qw(:all);
 
 use version; our $VERSION = qv('0.0.1');
 
@@ -21,6 +22,16 @@ sub new {
 }
 
 sub set_param {
+    my $self = shift;
+    my %params = validate(@_, {name=>{type=>SCALAR}, value=>1});
+    $self->{params}->{$params{name}} = $params{value};
+    return;
+}
+
+sub get_param {
+    my $self = shift;
+    my %params = validate(@_, {name=>{type=>SCALAR}});
+    return $self->{params}->{$params{name}};
 }
 
 sub get_cgi {
@@ -150,8 +161,11 @@ This returns a CGI object created according to the specification encapsulated in
 
 =head2 set_param
 
-This is a more explicit form of the two argument form of the C<param> method.
-That is it can be used to set a single form parameter. It takes two named arguments C<param> and C<value>. It is included for the sake of consistency with the more complex upload methods.
+This can be used to set a single form parameter. It takes two named arguments C<param> and C<value>.
+
+=head2 get_param
+
+This retrieves a single form parameter. It takes a single named parameter: C<name>.
 
 =head2 upload_file
 
