@@ -3,11 +3,31 @@ package Test::CGI::Multipart;
 use warnings;
 use strict;
 use Carp;
+use UNIVERSAL::require;
 
 use version; our $VERSION = qv('0.0.1');
 
 
 # Module implementation here
+
+sub new {
+    my $class = shift;
+    my $self = {class_cgi=>"CGI"};
+    bless $self, $class;
+    return $self;
+}
+
+sub get_cgi {
+    my $self = shift;
+    return $self->{class_cgi};
+}
+
+sub create_cgi {
+    my $self = shift;
+    $self->cgi_class->require;
+    my $cgi = $self->cgi_class->new;
+    return $cgi;
+}
 
 
 1; # Magic true value required at end of module
@@ -27,27 +47,113 @@ This document describes Test::CGI::Multipart version 0.0.1
 
     use Test::CGI::Multipart;
 
-=for author to fill in:
-    Brief code example(s) here showing commonest usage(s).
-    This section will be as far as many users bother reading
-    so make it as educational and exeplary as possible.
-  
+    my $tcm = Test::CGI::Multipart;
+
+    # specify the form parameters
+    $tcm->param(email=>'jim@hacker.com');
+    $tcm->param(first_name=>'Jim');
+    $tcm->set_param(param=>'last_name',value=>'Hacker');
+    $tcm->upload_file(param=>'file1',file_name=>$file_made_earlier);
+    $tcm->create_upload_file(
+        param=>'file2',
+        file_name=>'mega.txt',
+        size=>1_000_000
+    );
+    $tcm->create_upload_image(
+        param=>'file3',
+        type=>'gif',
+        # let's lie about the type to see if the code can spot it.
+        file_name=>'my_image.jpg',
+        width=>1000,
+        height=>1000
+    );
+
+    # Behind the scenes this will fake the browser and web server behaviour
+    # with regard to environment variables, MIME format and standard input.
+    my $cgi = $tcm->create_cgi;
+
+    # Okay now we have a CGI object which we can pass into the code 
+    # that needs testing and run the form handling various tests.
   
 =head1 DESCRIPTION
 
-=for author to fill in:
-    Write a full description of the module and its features here.
-    Use subsections (=head2, =head3) as appropriate.
-
+    It is quite difficult to write test code to capture the behaviour 
+    of CGI or similar objects handling forms that include a file upload.
+    Such code needs to harvest the parameters, build file content in MIME
+    format, set the environment variables accordingly and pump it into the 
+    the standard input of the required CGI object. This module attempts to
+    encapsulate this in such a way, that the tester can concentrate on
+    specifying what he is trying to test.
 
 =head1 INTERFACE 
 
-=for author to fill in:
-    Write a separate section listing the public components of the modules
-    interface. These normally consist of either subroutines that may be
-    exported, or methods that may be called on objects belonging to the
-    classes provided by the module.
+Several of the methods below take named parameters. For convenience we define those parameters here:
 
+=over 
+
+=item param
+
+This is the name of form parameter.
+
+=item value
+
+In simple cases the value of the form parameter.
+
+=item file_name
+
+Where a form parameter represents a file, this is the name of that file. If the method name includes the word "create" the file is to be created, otherwise it must exist and be readable.
+
+=item size
+
+This specifies the size of the file to be created. It is always an optional parameter.
+
+=item width, height
+
+The dimensions of image files.
+
+=item type
+
+The type of image files.
+
+=back
+
+=head2 new
+
+An instance of this class might best be thought of as a "CGI object factory".
+Currently the constructor takes no parameters.
+
+=head2 param
+
+This method has an interface designed to be completely analagous to the C<param>method in the L<CGI> and related class. The one argument form returns stashed parameters, the zero argument form returns all currently stashed values and all other forms stash parameters. Its use defines the template from which L<CGI> ojects are created and suffices for all form parameters except those corresponding toa file upload control.
+
+=head2 get_cgi
+
+This returns the name of the class of the CGI object that will be created. Currently this can only return "CGI".
+
+=head2 create_cgi
+
+This returns a CGI object created according to the specification encapsulated in the object. The exact mechanics are as follows:
+
+=over
+
+=item The parameters are packaged up in MIME format.
+
+=item The environment variables are set locally.
+
+=item A pipe is created. The far end of the pipe is attached to our standad input.
+
+=item The CGI object is created and returned.
+
+=back
+
+=head2 set_param
+
+This is a more explicit form of the two argument form of the C<param> method.
+That is it can be used to set a single form parameter. It takes two named arguments C<param> and C<value>. It is included for the sake of consistency with the more complex upload methods.
+
+=head2 upload_file
+
+This method takes two named parameters: C<param> and C<file_name>.
 
 =head1 DIAGNOSTICS
 
@@ -74,49 +180,16 @@ This document describes Test::CGI::Multipart version 0.0.1
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-=for author to fill in:
-    A full explanation of any configuration system(s) used by the
-    module, including the names and locations of any configuration
-    files, and the meaning of any environment variables or properties
-    that can be set. These descriptions must also include details of any
-    configuration language used.
-  
 Test::CGI::Multipart requires no configuration files or environment variables.
-
-
-=head1 DEPENDENCIES
-
-=for author to fill in:
-    A list of all the other modules that this module relies upon,
-    including any restrictions on versions, and an indication whether
-    the module is part of the standard Perl distribution, part of the
-    module's distribution, or must be installed separately. ]
-
-None.
-
 
 =head1 INCOMPATIBILITIES
 
-=for author to fill in:
-    A list of any modules that this module cannot be used in conjunction
-    with. This may be due to name conflicts in the interface, or
-    competition for system or program resources, or due to internal
-    limitations of Perl (for example, many modules that use source code
-    filters are mutually incompatible).
-
 None reported.
-
 
 =head1 BUGS AND LIMITATIONS
 
-=for author to fill in:
-    A list of known problems with the module, together with some
-    indication Whether they are likely to be fixed in an upcoming
-    release. Also a list of restrictions on the features the module
-    does provide: data types that cannot be handled, performance issues
-    and the circumstances in which they may arise, practical
-    limitations on the size of data sets, special cases that are not
-    (yet) handled, etc.
+This software is not tested and does not yet contain enough functionality
+to meet even its most basic goals.
 
 No bugs have been reported.
 
