@@ -5,6 +5,7 @@ use strict;
 use Carp;
 use UNIVERSAL::require;
 use Params::Validate qw(:all);
+use MIME::Entity;
 
 use version; our $VERSION = qv('0.0.1');
 
@@ -70,18 +71,56 @@ sub create_cgi {
 sub _mime_data {
     my $self = shift;
 
-    use MIME::Entity;
-    my $mime = MIME::Entity->build(
-        'Type'=>"multipart/form-data",
-    );
+    my $mime = $self->_create_multipart;
     foreach my $name ($self->get_names) {
-        $mime->attach(
-            'Content-Disposition'=>"form-data; name=\"$name\"",
-            Data=>$self->get_param(name=>$name),
-        );
+        my $value = $self->get_param(name=>$name);
+        if (ref($value) eq "") {
+            $self->_attach_field(
+                mime=>$mime,
+                name=>$name,
+                value=>$value,
+            );
+        }
+        elsif(ref($value) eq "ARRAY") {
+            foreach my $v (@$value) {
+                $self->_attach_field(
+                    mime=>$mime,
+                    name=>$name,
+                    value=>$v,
+                );
+            }
+        }
     }
 
+    $self->_attach_field(
+        mime=>$mime,
+        name=>'.submit',
+        value=>'Submit',
+    );
+
     return $mime;
+}
+
+sub _attach_field {
+    my $self = shift;
+    my %params = validate(@_, {
+                mime => {isa=>'MIME::Entity'},
+                name=>{type=>SCALAR},
+                value=>{type=>SCALAR}}
+    );
+    $params{mime}->attach(
+        'Content-Disposition'=>"form-data; name=\"$params{name}\"",
+        Data=>$params{value},
+    );
+    return;
+}
+
+sub _create_multipart {
+    my $self = shift;
+    my %params = validate(@_, {});
+    return MIME::Entity->build(
+        'Type'=>"multipart/form-data",
+    );
 }
 
 
@@ -104,9 +143,9 @@ This document describes Test::CGI::Multipart version 0.0.1
     my $tcm = Test::CGI::Multipart;
 
     # specify the form parameters
-    $tcm->set_param(email=>'jim@hacker.com');
-    $tcm->set_param(pets=> ['Rex', 'Oscar', 'Bidgie', 'Fish']);
-    $tcm->set_param(first_name=>'Jim');
+    $tcm->set_param(name='email',value=>'jim@hacker.com');
+    $tcm->set_param(name=>'pets',value=> ['Rex', 'Oscar', 'Bidgie', 'Fish']);
+    $tcm->set_param(name=>'first_name',value=>'Jim');
     $tcm->set_param(name=>'last_name',value=>'Hacker');
     $tcm->upload_file(name=>'file1',file_name=>$file_made_earlier);
     $tcm->create_upload_file(

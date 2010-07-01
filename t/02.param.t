@@ -34,6 +34,8 @@ isa_ok($cgi, 'CGI', 'created CGI object okay');
 @names = sort $cgi->param;
 is_deeply(\@names, ['first_name','pets'], 'names deep');
 foreach my $name (@names) {
-    is_deeply($cgi->param($name), $tcm->get_param(name=>$name), $name);
+    my @values = $cgi->param($name);
+    my $value = scalar(@values) == 1 ? $values[0] : \@values;
+    is_deeply($value, $tcm->get_param(name=>$name), $name);
 }
 
