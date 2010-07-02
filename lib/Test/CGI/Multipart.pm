@@ -15,7 +15,6 @@ use version; our $VERSION = qv('0.0.1');
 sub new {
     my $class = shift;
     my $self = {
-        class_cgi=>"CGI",
         params=>{},
     };
     bless $self, $class;
@@ -40,13 +39,9 @@ sub get_names {
     return keys %{$self->{params}};
 }
 
-sub get_cgi {
-    my $self = shift;
-    return $self->{class_cgi};
-}
-
 sub create_cgi {
     my $self = shift;
+    my %params = validate(@_, {cgi=>{type=>SCALAR,default=>'CGI'}});
 
     my $mime = $self->_mime_data;
     my $mime_string = $mime->stringify;
@@ -63,8 +58,8 @@ sub create_cgi {
     open(STDIN, '<', \$mime_string) or croak "could not open MIME handle";
     binmode STDIN;
 
-    $self->get_cgi->require;
-    my $cgi = $self->get_cgi->new;
+    $params{cgi}->require;
+    my $cgi = $params{cgi}->new;
     return $cgi;
 }
 
@@ -185,6 +180,10 @@ Several of the methods below take named parameters. For convenience we define th
 
 =over 
 
+=item cgi
+
+This option defines the CGI module.
+
 =item name
 
 This is the name of form parameter.
@@ -216,10 +215,6 @@ The type of image files.
 An instance of this class might best be thought of as a "CGI object factory".
 Currently the constructor takes no parameters.
 
-=head2 get_cgi
-
-This returns the name of the class of the CGI object that will be created. Currently this can only return "CGI".
-
 =head2 create_cgi
 
 This returns a CGI object created according to the specification encapsulated in the object. The exact mechanics are as follows:
@@ -235,6 +230,8 @@ This returns a CGI object created according to the specification encapsulated in
 =item The CGI object is created and returned.
 
 =back
+
+One can specify a different CGI class using the C<cgi> named parameter.
 
 =head2 set_param
 
