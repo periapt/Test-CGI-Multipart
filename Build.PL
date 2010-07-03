@@ -9,8 +9,11 @@ my $builder = Module::Build->new(
     dist_version_from   => 'lib/Test/CGI/Multipart.pm',
     build_requires => {
         'Test::More' => 0,
+        'Test::Exception' => 0,
     },
     requires => {
+        'MIME::Entity'=>0,
+        'autodie'=>0,
         'version'    => 0,
         'UNIVERSAL::require' => 0,
         'CGI'   => 0,

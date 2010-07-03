@@ -40,6 +40,7 @@ sub get_names {
 }
 
 sub create_cgi {
+    use autodie qw(open);
     my $self = shift;
     my %params = validate(@_, {cgi=>{type=>SCALAR,default=>'CGI'}});
 
@@ -55,7 +56,7 @@ sub create_cgi {
     local $ENV{CONTENT_LENGTH}=length($mime_string);
 
     local *STDIN;
-    open(STDIN, '<', \$mime_string) or croak "could not open MIME handle";
+    open(STDIN, '<', \$mime_string);
     binmode STDIN;
 
     $params{cgi}->require;
@@ -85,8 +86,14 @@ sub _mime_data {
                 );
             }
         }
+        else {
+            croak "unexpected data structure";
+        }
     }
 
+    # Required so at least we don't have an empty MIME structure.
+    # And lynx at least does send it.
+    # CGI.pm seems to it out where as the others seem to pass it on.
     $self->_attach_field(
         mime=>$mime,
         name=>'.submit',
@@ -180,31 +187,31 @@ Several of the methods below take named parameters. For convenience we define th
 
 =over 
 
-=item cgi
+=item C<cgi>
 
 This option defines the CGI module.
 
-=item name
+=item C<name>
 
 This is the name of form parameter.
 
-=item value
+=item C<value>
 
 In simple cases the value of the form parameter.
 
-=item file_name
+=item file_name>
 
 Where a form parameter represents a file, this is the name of that file. If the method name includes the word "create" the file is to be created, otherwise it must exist and be readable.
 
-=item size
+=item C<size>
 
 This specifies the size of the file to be created. It is always an optional parameter.
 
-=item width, height
+=item C<width>, C<height>
 
 The dimensions of image files.
 
-=item type
+=item C<type>
 
 The type of image files.
 
@@ -251,23 +258,13 @@ This method takes two named parameters: C<param> and C<file_name>.
 
 =head1 DIAGNOSTICS
 
-=for author to fill in:
-    List every single error and warning message that the module can
-    generate (even the ones that will "never happen"), with a full
-    explanation of each problem, one or more likely causes, and any
-    suggested remedies.
-
 =over
 
-=item C<< Error message here, perhaps with %s placeholders >>
+=item C<< unexpected data structure >>
 
-[Description of error here]
-
-=item C<< Another error message here >>
-
-[Description of error here]
-
-[Et cetera, et cetera]
+During the construction of the MIME data, the internal
+data structure turned out to have unexpected features.
+Since we control that data structure that should not happen.
 
 =back
 
@@ -278,7 +275,7 @@ Test::CGI::Multipart requires no configuration files or environment variables.
 
 =head1 INCOMPATIBILITIES
 
-None reported.
+I would like to get this working with L<CGI::Lite::Request> and L<Apache::Request> if that makes sense. So far I have not managed that.
 
 =head1 BUGS AND LIMITATIONS
 

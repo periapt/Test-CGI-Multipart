@@ -6,8 +6,10 @@ MANIFEST
 README
 t/00.load.t
 t/01.basic.t
+t/01.data_structure.t
 t/02.param.t
 t/changes.t
+t/lib/Utils.pm
 t/manifest.t
 t/perlcritic.t
 t/perlcriticrc
