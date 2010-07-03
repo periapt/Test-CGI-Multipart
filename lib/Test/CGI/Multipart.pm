@@ -13,6 +13,30 @@ use version; our $VERSION = qv('0.0.1');
 # Module implementation here
 
 Readonly my $NAME_SPEC => {type=>SCALAR};
+Readonly my $VALUE_SPEC => {type=>SCALAR|ARRAYREF};
+Readonly my $CGI_SPEC => {
+    type=>SCALAR,
+    default=>'CGI',
+    regex=> qr{
+                \A              # start of string
+                (?:
+                    \w          
+                    |(?:\:\:)   # Module name separator
+                )+
+                \z              # end of string
+    }xms
+};
+Readonly my $TYPE_SPEC => {
+    type=>SCALAR,
+    optional=>1,
+    regex=> qr{
+                \A              # start of string
+                [\w\-]+         # major type
+                \/              # MIME type separator
+                [\w\-]+         # sub-type
+                \z              # end of string
+    }xms
+};
 
 sub new {
     my $class = shift;
@@ -25,14 +49,14 @@ sub new {
 
 sub set_param {
     my $self = shift;
-    my %params = validate(@_, {name=>$NAME_SPEC, value=>1});
+    my %params = validate(@_, {name=>$NAME_SPEC, value=>$VALUE_SPEC});
     $self->{params}->{$params{name}} = $params{value};
     return;
 }
 
 sub upload_file {
     my $self = shift;
-    my %params = validate(@_, {name=>$NAME_SPEC, value=>1, file=>1, type=>1});
+    my %params = validate(@_, {name=>$NAME_SPEC, value=>$VALUE_SPEC, file=>1, type=>$TYPE_SPEC});
     return;
 }
 
@@ -50,7 +74,7 @@ sub get_names {
 sub create_cgi {
     use autodie qw(open);
     my $self = shift;
-    my %params = validate(@_, {cgi=>{type=>SCALAR,default=>'CGI'}});
+    my %params = validate(@_, {cgi=>$CGI_SPEC});
 
     my $mime = $self->_mime_data;
     my $mime_string = $mime->stringify;
@@ -101,7 +125,7 @@ sub _mime_data {
 
     # Required so at least we don't have an empty MIME structure.
     # And lynx at least does send it.
-    # CGI.pm seems to it out where as the others seem to pass it on.
+    # CGI.pm seems to strip it out where as the others seem to pass it on.
     $self->_attach_field(
         mime=>$mime,
         name=>'.submit',
@@ -157,7 +181,7 @@ This document describes Test::CGI::Multipart version 0.0.1
     $tcm->set_param(name=>'pets',value=> ['Rex', 'Oscar', 'Bidgie', 'Fish']);
     $tcm->set_param(name=>'first_name',value=>'Jim');
     $tcm->set_param(name=>'last_name',value=>'Hacker');
-    $tcm->upload_file(name=>'file1',file_name=>$file_made_earlier);
+    $tcm->upload_file(name=>'file1',file=>$file_made_earlier);
     $tcm->create_upload_file(
         name=>'file2',
         file_name=>'mega.txt',
@@ -197,7 +221,8 @@ Several of the methods below take named parameters. For convenience we define th
 
 =item C<cgi>
 
-This option defines the CGI module.
+This option defines the CGI module. It should be a scalar conisting only
+of alphanumeric characters and C<::>. It defaults to 'CGI'.
 
 =item C<name>
 
@@ -205,7 +230,8 @@ This is the name of form parameter. It must be a scalar.
 
 =item C<value>
 
-In simple cases the value of the form parameter.
+This is the value of the form parameter. It should either be
+a scalar or an array reference of scalars.
 
 =item file_name>
 
@@ -240,13 +266,13 @@ This returns a CGI object created according to the specification encapsulated in
 
 =item The environment variables are set locally.
 
-=item A pipe is created. The far end of the pipe is attached to our standard input.
+=item A pipe is created. The far end of the pipe is attached to our standard input. And the MIME content is pushed through the pipe.
 
 =item The CGI object is created and returned.
 
 =back
 
-One can specify a different CGI class using the C<cgi> named parameter.
+As far as I can see this simulates what happens when a CGI script processes a ultipart POST form. One can specify a different CGI class using the C<cgi> named parameter.
 
 =head2 set_param
 
