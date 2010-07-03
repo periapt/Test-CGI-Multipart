@@ -6,11 +6,13 @@ use Carp;
 use UNIVERSAL::require;
 use Params::Validate qw(:all);
 use MIME::Entity;
+use Readonly;
 
 use version; our $VERSION = qv('0.0.1');
 
-
 # Module implementation here
+
+Readonly my $NAME_SPEC => {type=>SCALAR};
 
 sub new {
     my $class = shift;
@@ -23,14 +25,20 @@ sub new {
 
 sub set_param {
     my $self = shift;
-    my %params = validate(@_, {name=>{type=>SCALAR}, value=>1});
+    my %params = validate(@_, {name=>$NAME_SPEC, value=>1});
     $self->{params}->{$params{name}} = $params{value};
+    return;
+}
+
+sub upload_file {
+    my $self = shift;
+    my %params = validate(@_, {name=>$NAME_SPEC, value=>1, file=>1, type=>1});
     return;
 }
 
 sub get_param {
     my $self = shift;
-    my %params = validate(@_, {name=>{type=>SCALAR}});
+    my %params = validate(@_, {name=>$NAME_SPEC});
     return $self->{params}->{$params{name}};
 }
 
@@ -107,7 +115,7 @@ sub _attach_field {
     my $self = shift;
     my %params = validate(@_, {
                 mime => {isa=>'MIME::Entity'},
-                name=>{type=>SCALAR},
+                name=>$NAME_SPEC,
                 value=>{type=>SCALAR}}
     );
     $params{mime}->attach(
@@ -193,7 +201,7 @@ This option defines the CGI module.
 
 =item C<name>
 
-This is the name of form parameter.
+This is the name of form parameter. It must be a scalar.
 
 =item C<value>
 
