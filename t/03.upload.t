@@ -9,7 +9,7 @@ use Utils;
 Readonly my $PETS => ['Rex','Oscar','Bidgie','Fish'];
 
 my @cgi_modules = Utils::get_cgi_modules;
-plan tests => 8+4*scalar(@cgi_modules);
+plan tests => 9+5*scalar(@cgi_modules);
 
 my $tcm = Test::CGI::Multipart->new;
 isa_ok($tcm, 'Test::CGI::Multipart');
@@ -32,10 +32,11 @@ is_deeply(\@names, ['first_name','pets'], 'names deep');
 
 ok(!defined $tcm->upload_file(
     name=>'files',
-    type=>'application/blah',
     file=>'doo_doo.blah',
     value=>'Blah, Blah, Blah,....'),
 'uploading blah file');
+@names= sort $tcm->get_names;
+is_deeply(\@names, ['files', 'first_name', 'pets'], 'names deep');
 
 
 foreach my $class (@cgi_modules) {
@@ -53,10 +54,17 @@ foreach my $class (@cgi_modules) {
     isa_ok($cgi, $class||'CGI', 'created CGI object okay');
 
     @names = grep {$_ ne '' and $_ ne '.submit'} sort $cgi->param;
-    is_deeply(\@names, ['first_name','pets'], 'names deep');
+    is_deeply(\@names, ['files', 'first_name','pets'], 'names deep');
     foreach my $name (@names) {
         my @values = $cgi->param($name);
-        my $value = scalar(@values) == 1 ? $values[0] : \@values;
-        is_deeply($value, $tcm->get_param(name=>$name), $name);
+        my $got = scalar(@values) == 1 ? $values[0] : \@values;
+        my $expected = $tcm->get_param(name=>$name);
+        if (ref($expected) eq "HASH") {
+            my @expected;
+            foreach my $k (keys %$expected) {
+                $expected = $expected->{$k}->{value};
+            }
+        }
+        is_deeply($got, $expected, $name);
     }
 }

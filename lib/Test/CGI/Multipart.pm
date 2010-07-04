@@ -41,10 +41,19 @@ Readonly my $TYPE_SPEC => {
                 \z              # end of string
     }xms
 };
+Readonly my $FILE_SPEC => {
+    type=>SCALAR,
+    optional=>1,
+};
+Readonly my $MIME_SPEC => {
+    type=>OBJECT,
+    isa=>'MIME::Entity',
+};
 
 sub new {
     my $class = shift;
     my $self = {
+        file_index=>0,
         params=>{},
     };
     bless $self, $class;
@@ -60,7 +69,27 @@ sub set_param {
 
 sub upload_file {
     my $self = shift;
-    my %params = validate(@_, {name=>$NAME_SPEC, value=>$VALUE_SPEC, file=>1, type=>$TYPE_SPEC});
+    my %params = validate(@_, {
+                    name=>$NAME_SPEC,
+                    value=>$VALUE_SPEC,
+                    file=>$FILE_SPEC,
+                    type=>$TYPE_SPEC
+    });
+    my $name = $params{name};
+
+    if (!exists $self->{$name}) {
+        $self->{$name} = {};
+    }
+    if (ref $self->{$name} ne "HASH") {
+        croak "mismatch: is $name a file upload or not";
+    }
+
+    my $file_index = $self->{file_index};
+
+    $self->{params}->{$name}->{$file_index} = \%params;
+
+    $self->{file_index}++;
+
     return;
 }
 
@@ -122,6 +151,9 @@ sub _mime_data {
                 );
             }
         }
+        elsif(ref($value) eq "HASH") {
+            $self->_encode_upload(mime=>$mime,values=>$value);
+        }
         else {
             croak "unexpected data structure";
         }
@@ -142,9 +174,10 @@ sub _mime_data {
 sub _attach_field {
     my $self = shift;
     my %params = validate(@_, {
-                mime => {isa=>'MIME::Entity'},
+                mime => $MIME_SPEC,
                 name=>$NAME_SPEC,
-                value=>{type=>SCALAR}}
+                value=>$VALUE_SPEC,
+        }
     );
     $params{mime}->attach(
         'Content-Disposition'=>"form-data; name=\"$params{name}\"",
@@ -159,6 +192,52 @@ sub _create_multipart {
     return MIME::Entity->build(
         'Type'=>"multipart/form-data",
     );
+}
+
+sub _encode_upload {
+    my $self = shift;
+    my %params = validate(@_, {
+                mime => $MIME_SPEC,
+                values => {type=>HASHREF}
+    });
+    my %values = %{$params{values}};
+    if (keys %values > 1) {
+        croak "not implemented yet";
+    }
+    else {
+        my $key = (keys %values)[0];
+        $self->_attach_file(
+            mime=>$params{mime},
+            %{$values{$key}}
+        );
+    }
+    return;
+}
+
+sub _attach_file {
+    my $self = shift;
+    my %params = validate(@_, {
+                mime => $MIME_SPEC,
+                file=>$FILE_SPEC,
+                type=>$TYPE_SPEC,
+                name=>$NAME_SPEC,
+                value=>$VALUE_SPEC,
+        }
+    );
+    my %attach = (
+        'Content-Disposition'=>"form-data; name=\"$params{name}\"",
+        Data=>$params{value},
+    );
+    if ($params{file}) {
+        $attach{'Content-Disposition'} .= "; file=\"$params{file}\"";
+    }
+    if ($params{type}) {
+        $attach{Type} = $params{type};
+    }
+    $params{mime}->attach(
+        %attach
+    );
+    return;
 }
 
 
@@ -237,9 +316,10 @@ This is the name of form parameter. It must be a scalar.
 This is the value of the form parameter. It should either be
 a scalar or an array reference of scalars.
 
-=item file_name>
+=item C<file_name>
 
-Where a form parameter represents a file, this is the name of that file. If the method name includes the word "create" the file is to be created, otherwise it must exist and be readable.
+Where a form parameter represents a file, this is the name of that file.
+It is optional since it is possible that a browser may not send it.
 
 =item C<size>
 
@@ -303,6 +383,11 @@ This method takes two named parameters: C<param> and C<file_name>.
 During the construction of the MIME data, the internal
 data structure turned out to have unexpected features.
 Since we control that data structure that should not happen.
+
+=item C<< mismatch: is %s a file upload or not >>
+
+The parameter was being used for both for file upload and normal
+paremeters.
 
 =back
 
