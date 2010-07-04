@@ -12,6 +12,10 @@ use version; our $VERSION = qv('0.0.1');
 
 # Module implementation here
 
+# Parameter specs
+# Note the purpose of these spcs is to protect our data structures.
+# It should not protect the code that will be tested
+# as that must look after itself.
 Readonly my $NAME_SPEC => {type=>SCALAR};
 Readonly my $VALUE_SPEC => {type=>SCALAR|ARRAYREF};
 Readonly my $CGI_SPEC => {
