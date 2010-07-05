@@ -18,7 +18,8 @@ ok(!defined $tcm->set_param(
     name=>'first_name',
     value=>'Jim'),
 'setting parameter');
-is($tcm->get_param(name=>'first_name'), 'Jim', 'get param');
+my @values = $tcm->get_param(name=>'first_name');
+is_deeply(\@values, ['Jim'], 'get param');
 my @names= $tcm->get_names;
 is_deeply(\@names, ['first_name'], 'first name deep');
 
@@ -26,7 +27,8 @@ ok(!defined $tcm->set_param(
     name=>'pets',
     value=>$PETS),
 'setting parameter');
-is($tcm->get_param(name=>'pets'), $PETS, 'get param');
+@values = $tcm->get_param(name=>'pets');
+is_deeply(\@values, $PETS, 'get param');
 @names= sort $tcm->get_names;
 is_deeply(\@names, ['first_name','pets'], 'names deep');
 
@@ -56,15 +58,13 @@ foreach my $class (@cgi_modules) {
     @names = grep {$_ ne '' and $_ ne '.submit'} sort $cgi->param;
     is_deeply(\@names, ['files', 'first_name','pets'], 'names deep');
     foreach my $name (@names) {
-        my @values = $cgi->param($name);
-        my $got = scalar(@values) == 1 ? $values[0] : \@values;
-        my $expected = $tcm->get_param(name=>$name);
-        if (ref($expected) eq "HASH") {
-            my @expected;
-            foreach my $k (keys %$expected) {
-                $expected = $expected->{$k}->{value};
+        my @got = $cgi->param($name);
+        my @expected = $tcm->get_param(name=>$name);
+        if (ref($expected[0]) eq "HASH") {
+            foreach my $i (0..$#expected) {
+                $expected[$i] = $expected[$i]->{value};
             }
         }
-        is_deeply($got, $expected, $name);
+        is_deeply(\@got, \@expected, $name);
     }
 }

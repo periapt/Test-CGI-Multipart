@@ -21,6 +21,7 @@ Test::Spelling::add_stopwords(qw(
                                     github
                                     AnnoCPAN
                                     RT
+                                    HASHREFs
                                     API
                                     param
                                     SQL

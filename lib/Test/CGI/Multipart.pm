@@ -63,7 +63,11 @@ sub new {
 sub set_param {
     my $self = shift;
     my %params = validate(@_, {name=>$NAME_SPEC, value=>$VALUE_SPEC});
-    $self->{params}->{$params{name}} = $params{value};
+    my @values  = ref $params{value} eq 'ARRAY'
+                ? @{$params{value}}
+                : $params{value}
+    ;
+    $self->{params}->{$params{name}} = \@values;
     return;
 }
 
@@ -80,7 +84,7 @@ sub upload_file {
     if (!exists $self->{$name}) {
         $self->{$name} = {};
     }
-    if (ref $self->{$name} ne "HASH") {
+    if (ref $self->{$name} ne 'HASH') {
         croak "mismatch: is $name a file upload or not";
     }
 
@@ -96,7 +100,11 @@ sub upload_file {
 sub get_param {
     my $self = shift;
     my %params = validate(@_, {name=>$NAME_SPEC});
-    return $self->{params}->{$params{name}};
+    my $name = $params{name};
+    if (ref $self->{params}->{$name} eq 'HASH') {
+        return values %{$self->{params}->{$name}};
+    }
+    return @{$self->{params}->{$name}};
 }
 
 sub get_names {
@@ -134,15 +142,8 @@ sub _mime_data {
 
     my $mime = $self->_create_multipart;
     foreach my $name ($self->get_names) {
-        my $value = $self->get_param(name=>$name);
-        if (ref($value) eq "") {
-            $self->_attach_field(
-                mime=>$mime,
-                name=>$name,
-                value=>$value,
-            );
-        }
-        elsif(ref($value) eq "ARRAY") {
+        my $value = $self->{params}->{$name};
+        if (ref($value) eq "ARRAY") {
             foreach my $v (@$value) {
                 $self->_attach_field(
                     mime=>$mime,
@@ -304,7 +305,7 @@ Several of the methods below take named parameters. For convenience we define th
 
 =item C<cgi>
 
-This option defines the CGI module. It should be a scalar conisting only
+This option defines the CGI module. It should be a scalar consisting only
 of alphanumeric characters and C<::>. It defaults to 'CGI'.
 
 =item C<name>
@@ -356,15 +357,18 @@ This returns a CGI object created according to the specification encapsulated in
 
 =back
 
-As far as I can see this simulates what happens when a CGI script processes a ultipart POST form. One can specify a different CGI class using the C<cgi> named parameter.
+As far as I can see this simulates what happens when a CGI script processes a multi-part POST form. One can specify a different CGI class using the C<cgi> named parameter.
 
 =head2 set_param
 
-This can be used to set a single form parameter. It takes two named arguments C<param> and C<value>.
+This can be used to set a single form parameter. It takes two named arguments C<name> and C<value>. Note that this method overrides any previous settings including file uploads.
 
 =head2 get_param
 
-This retrieves a single form parameter. It takes a single named parameter: C<name>.
+This retrieves a single form parameter. It takes a single named
+parameter: C<name>. The data returned will be a list either of scalar
+values or (in the case of a file upload) of HASHREFs. The HASHREFs would have
+the following fields: C<file>, C<value> and C<type> representing the file name, the content and the MIME type respectively.
 
 =head2 get_names
 
@@ -372,7 +376,7 @@ This returns a list of stashed parameter names.
 
 =head2 upload_file
 
-This method takes two named parameters: C<param> and C<file_name>.
+This method takes two mandatory named parameters: C<name> and C<value> and two optional parameters C<type> and C<file>. Unlike the C<set_param> method this will not override previous settings for this parameter but will add. However setting a normal parameter and then n upload on the same name will throw an error.
 
 =head1 DIAGNOSTICS
 
@@ -387,7 +391,7 @@ Since we control that data structure that should not happen.
 =item C<< mismatch: is %s a file upload or not >>
 
 The parameter was being used for both for file upload and normal
-paremeters.
+parameters.
 
 =back
 
