@@ -3,12 +3,14 @@ use strict;
 use warnings;
 use Test::More;
 use Test::CGI::Multipart;
+use lib qw(/home/nicholas/git/CGI.pm/lib);
+use CGI;
 use Readonly;
 use lib qw(t/lib);
 use Utils;
 Readonly my $PETS => ['Rex','Oscar','Bidgie','Fish'];
 
-my @cgi_modules = Utils::get_cgi_modules;
+my @cgi_modules = (undef, 'CGI'); #Utils::get_cgi_modules;
 plan tests => 9+5*scalar(@cgi_modules);
 
 my $tcm = Test::CGI::Multipart->new;
@@ -58,13 +60,8 @@ foreach my $class (@cgi_modules) {
     @names = grep {$_ ne '' and $_ ne '.submit'} sort $cgi->param;
     is_deeply(\@names, ['files', 'first_name','pets'], 'names deep');
     foreach my $name (@names) {
-        my @got = $cgi->param($name);
-        my @expected = $tcm->get_param(name=>$name);
-        if (ref($expected[0]) eq "HASH") {
-            foreach my $i (0..$#expected) {
-                $expected[$i] = $expected[$i]->{value};
-            }
-        }
-        is_deeply(\@got, \@expected, $name);
+        my ($got, $expected) =
+            Utils::get_actual_versus_expected($tcm, $cgi, $name);
+        is_deeply($got, $expected, $name);
     }
 }

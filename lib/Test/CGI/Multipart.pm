@@ -230,7 +230,7 @@ sub _attach_file {
         Data=>$params{value},
     );
     if ($params{file}) {
-        $attach{'Content-Disposition'} .= "; file=\"$params{file}\"";
+        $attach{'Content-Disposition'} .= "; filename=\"$params{file}\"";
     }
     if ($params{type}) {
         $attach{Type} = $params{type};
