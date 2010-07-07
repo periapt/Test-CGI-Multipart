@@ -81,10 +81,10 @@ sub upload_file {
     });
     my $name = $params{name};
 
-    if (!exists $self->{$name}) {
-        $self->{$name} = {};
+    if (!exists $self->{params}->{$name}) {
+        $self->{params}->{$name} = {};
     }
-    if (ref $self->{$name} ne 'HASH') {
+    if (ref $self->{params}->{$name} ne 'HASH') {
         croak "mismatch: is $name a file upload or not";
     }
 
