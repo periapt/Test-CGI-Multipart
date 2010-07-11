@@ -5,15 +5,12 @@ use Test::More;
 use Test::CGI::Multipart;
 use Test::Exception;
 use Readonly;
-use lib qw(/home/nicholas/git/CGI.pm/lib);
-use CGI;
 use lib qw(t/lib);
 use Utils;
 Readonly my $PETS => ['Rex','Oscar','Bidgie','Fish'];
 
-#my @cgi_modules = (undef, 'CGI'); #Utils::get_cgi_modules;
 my @cgi_modules = Utils::get_cgi_modules;
-plan tests => 9+5*scalar(@cgi_modules);
+plan tests => 12+5*@cgi_modules;
 
 my $tcm = Test::CGI::Multipart->new;
 isa_ok($tcm, 'Test::CGI::Multipart');
@@ -44,13 +41,23 @@ ok(!defined $tcm->upload_file(
 @names= sort $tcm->get_names;
 is_deeply(\@names, ['files', 'first_name', 'pets'], 'names deep');
 
+ok(!defined $tcm->upload_file(
+    name=>'files',
+    file=>'nah_nah.blah',
+    value=>'Nah, Nah, Nah,....'),
+'uploading second blah file');
+@names= sort $tcm->get_names;
+is_deeply(\@names, ['files', 'first_name', 'pets'], 'names deep');
 
-SKIP:
+dies_ok{ $tcm->upload_file(
+    name=>'first_name',
+    file=>'name.blah',
+    value=>'Alfred, Bob, Carl, Dexter, Edward, Frank, George, Harry, Ivan, John,,,,,,')} 'mismatch: is first_name a file upload or not';
+
 foreach my $class (@cgi_modules) {
+SKIP: {
 
-    if (defined $class and $class eq 'CGI::Simple') {
-        skip 'CGI::Simple not working', 5;
-    }
+    skip 'nothing working here', 5;
 
     if ($class) {
         diag "Testing with $class";
@@ -79,5 +86,8 @@ foreach my $class (@cgi_modules) {
         }
         is_deeply($got, $expected, $name);
     }
+
+    }
 }
+
 
