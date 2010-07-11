@@ -375,9 +375,13 @@ This returns a CGI object created according to the specification encapsulated in
 
 =item The parameters are packaged up in MIME format.
 
-=item The environment variables are set locally.
+=item The environment variables are set.
 
 =item A pipe is created. The far end of the pipe is attached to our standard input. And the MIME content is pushed through the pipe.
+
+=item The appropriate CGI class is required.
+
+=item Uploads are enabled if the CGI class is L<CGI::Simple>.
 
 =item The CGI object is created and returned.
 
@@ -425,6 +429,19 @@ parameters.
 =head1 CONFIGURATION AND ENVIRONMENT
 
 Test::CGI::Multipart requires no configuration files or environment variables.
+
+However it should be noted that the module will overwrite the following 
+environment variables:
+
+=over
+
+=item REQUEST_METHOD
+
+=item CONTENT_LENGTH
+
+=item CONTENT_TYPE
+
+=back
 
 =head1 INCOMPATIBILITIES
 

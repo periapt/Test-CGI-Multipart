@@ -9,6 +9,8 @@ t/01.basic.t
 t/01.data_structure.t
 t/02.param.t
 t/03.upload.t
+t/04.multiple.t
+t/04.separate.t
 t/changes.t
 t/lib/Utils.pm
 t/manifest.t
