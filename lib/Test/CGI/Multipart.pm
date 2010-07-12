@@ -49,16 +49,12 @@ Readonly my $MIME_SPEC => {
     type=>OBJECT,
     isa=>'MIME::Entity',
 };
-Readonly my $MULTIPLE_SPEC => {
-    type=>SCALAR,
-    optional=>1,
-    default=>0,
-};
 
 sub new {
     my $class = shift;
     my $self = {
         file_index=>0,
+        boundary_count=>0,
         params=>{},
     };
     bless $self, $class;
@@ -202,6 +198,7 @@ sub _create_multipart {
     my %params = validate(@_, {});
     return MIME::Entity->build(
         'Type'=>"multipart/form-data",
+#        Boundary=>$self->make_boundary,
     );
 }
 
@@ -212,26 +209,10 @@ sub _encode_upload {
                 values => {type=>HASHREF}
     });
     my %values = %{$params{values}};
-    if (keys %values > 1) {
-        my $name = $values{(keys %values)[0]}->{name};
-        my $top = MIME::Entity->build(
-            'Content-Disposition'=>"form-data; name=\"$name\"",
-            Type=>'multipart/mixed'
-        );
-        foreach my $k (keys %values) {
-            $self->_attach_file(
-                mime=>$top,
-                multiple_files=>1,
-                %{$values{$k}},
-            );
-        }
-        $params{mime}->add_part($top);
-    }
-    else {
-        my $key = (keys %values)[0];
+    foreach my $k (keys %values) {
         $self->_attach_file(
             mime=>$params{mime},
-            %{$values{$key}}
+            %{$values{$k}}
         );
     }
     return;
@@ -245,16 +226,12 @@ sub _attach_file {
                 type=>$TYPE_SPEC,
                 name=>$NAME_SPEC,
                 value=>$VALUE_SPEC,
-                multiple_files=>$MULTIPLE_SPEC,
         }
     );
     my %attach = (
-        'Content-Disposition'=>"form-data",
+        'Content-Disposition'=>"form-data; name=\"$params{name}\"",
         Data=>$params{value},
     );
-    if (! $params{multiple_file}) {
-        $attach{'Content-Disposition'} .= "; name=\"$params{name}\"";
-    }
     if ($params{file}) {
         $attach{'Content-Disposition'} .= "; filename=\"$params{file}\"";
     }
@@ -267,7 +244,13 @@ sub _attach_file {
     return;
 }
 
-
+#sub make_boundary {
+#    my $self = shift;
+#    my $boundary = "------JJJJJJJJJJ-$self->{boundary_count}";
+#    ++$self->{boundary_count};
+##    return $boundary;
+#}
+#
 1; # Magic true value required at end of module
 __END__
 
