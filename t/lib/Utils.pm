@@ -59,6 +59,26 @@ sub get_actual_upload {
             }
         }
     }
+    elsif ($class eq 'CGI::Simple') {
+        my @fh = $cgi->upload($name);
+        foreach my $fh (@fh) {
+            if ($fh) {
+                my $data = slurp($fh);
+                $fh->close;
+                my $file = $cgi->param($name);
+                my $type = $cgi->upload_info($file, 'mime');
+                push @got, {
+                    file=>$file,
+                    value=>$data,
+                    type=>$type,
+                    name=>$name
+                };
+            }
+            else {
+                return undef;
+            }
+        }
+    }
     else {
         my @fh = $cgi->upload($name);
         foreach my $fh (@fh) {
@@ -66,7 +86,8 @@ sub get_actual_upload {
                 my $io = $fh->handle;
                 my $data = slurp($io);
                 $io->close;
-                my $file = $cgi->param($name);
+                my $file = scalar $fh;
+                #my $file = $cgi->param($name);
                 my $type = $cgi->uploadInfo($file)->{'Content-Type'};
                 push @got, {
                     file=>$file,

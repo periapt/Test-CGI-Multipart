@@ -48,9 +48,9 @@ is_deeply(\@names, ['files', 'first_name', 'pets'], 'names deep');
 SKIP:
 foreach my $class (@cgi_modules) {
 
-    if (defined $class and $class eq 'CGI::Simple') {
-        skip 'CGI::Simple not working', 5;
-    }
+#    if (defined $class and $class eq 'CGI::Simple') {
+#        skip 'CGI::Simple not working', 5;
+#    }
 
     if ($class) {
         diag "Testing with $class";

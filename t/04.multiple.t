@@ -57,8 +57,9 @@ dies_ok{ $tcm->upload_file(
 foreach my $class (@cgi_modules) {
 SKIP: {
 
-    skip 'nothing working here', 5
-        if defined $class and $class eq 'CGI::Simple';
+    if (defined $class and $class eq 'CGI::Simple') {
+        skip 'CGI::Simple apparently does not support multiple files', 5;
+    }
 
     if ($class) {
         diag "Testing with $class";
@@ -86,12 +87,12 @@ SKIP: {
             $got = \@got;
         }
 
-        if ($name eq 'files') {
-            if (!defined $class or $class eq 'CGI') {
-                diag "Problem with CGI: hacking";
-                $got->[1]->{file} = $expected->[1]->{file};
-            }
-        }
+#        if ($name eq 'files') {
+#            if (!defined $class or $class eq 'CGI') {
+#                diag "Problem with CGI: hacking";
+#                $got->[1]->{file} = $expected->[1]->{file};
+#            }
+#        }
 
         is_deeply($got, $expected, $name);
     }

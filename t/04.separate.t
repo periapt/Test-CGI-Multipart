@@ -9,7 +9,7 @@ use Utils;
 Readonly my $PETS => ['Rex','Oscar','Bidgie','Fish'];
 
 my @cgi_modules = Utils::get_cgi_modules;
-plan tests => 10+6*@cgi_modules;
+plan tests => 11+6*@cgi_modules;
 
 my $tcm = Test::CGI::Multipart->new;
 isa_ok($tcm, 'Test::CGI::Multipart');
@@ -51,9 +51,9 @@ is_deeply(\@names, ['files', 'files2', 'first_name', 'pets'], 'names deep');
 foreach my $class (@cgi_modules) {
 SKIP: {
 
-    if (defined $class and $class eq 'CGI::Simple') {
-        skip 'CGI::Simple not working', 5;
-    }
+#    if (defined $class and $class eq 'CGI::Simple') {
+##        skip 'CGI::Simple not working', 5;
+#    }
 
     if ($class) {
         diag "Testing with $class";
