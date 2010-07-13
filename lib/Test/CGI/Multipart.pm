@@ -129,6 +129,7 @@ sub create_cgi {
     $ENV{CONTENT_TYPE}="multipart/form-data; boundary=$boundary";
     $ENV{CONTENT_LENGTH}=length($mime_string);
 
+    # Would like to localize these but this causes problems with CGI::Simple.
     local *STDIN;
     open(STDIN, '<', \$mime_string);
     binmode STDIN;
@@ -198,7 +199,6 @@ sub _create_multipart {
     my %params = validate(@_, {});
     return MIME::Entity->build(
         'Type'=>"multipart/form-data",
-#        Boundary=>$self->make_boundary,
     );
 }
 
@@ -244,13 +244,6 @@ sub _attach_file {
     return;
 }
 
-#sub make_boundary {
-#    my $self = shift;
-#    my $boundary = "------JJJJJJJJJJ-$self->{boundary_count}";
-#    ++$self->{boundary_count};
-##    return $boundary;
-#}
-#
 1; # Magic true value required at end of module
 __END__
 
@@ -274,19 +267,16 @@ This document describes Test::CGI::Multipart version 0.0.1
     $tcm->set_param(name=>'pets',value=> ['Rex', 'Oscar', 'Bidgie', 'Fish']);
     $tcm->set_param(name=>'first_name',value=>'Jim');
     $tcm->set_param(name=>'last_name',value=>'Hacker');
-    $tcm->upload_file(name=>'file1',file=>$file_made_earlier);
-    $tcm->create_upload_file(
-        name=>'file2',
-        file_name=>'mega.txt',
-        size=>1_000_000
+    $tcm->upload_file(
+        name=>'file1',
+        file=>'made_up_filename.txt',
+        value=>$content
     );
-    $tcm->create_upload_image(
-        name=>'file3',
-        type=>'gif',
-        # let's lie about the type to see if the code can spot it.
-        file_name=>'my_image.jpg',
-        width=>1000,
-        height=>1000
+    $tcm->upload_file(
+        name=>'file1',
+        file=>'made_up_filename.blah',
+        value=>$content_blah,
+        type=>'application/blah'
     );
 
     # Behind the scenes this will fake the browser and web server behaviour
@@ -302,9 +292,20 @@ This document describes Test::CGI::Multipart version 0.0.1
     of CGI or similar objects handling forms that include a file upload.
     Such code needs to harvest the parameters, build file content in MIME
     format, set the environment variables accordingly and pump it into the 
-    the standard input of the required CGI object. This module attempts to
-    encapsulate this in such a way, that the tester can concentrate on
-    specifying what he is trying to test.
+    the standard input of the required CGI object. This module provides
+    simple methods so that having prepared suitable content, the test script
+    can simulate the submission of webforms including file uploads.
+
+    However we also recognize that a test script is not always the best place
+    to prepare content. Rather a test script would rather specify requirements
+    for a file a upload: type, size, mismatches between the file name and its
+    contents and so on. This module cannot hope to provide such open ended
+    functionality but it can provide extension mechanisms.
+
+    This module works with L<CGI> (the default), L<CGI::Minimal> and 
+    L<CGI::Simple>. In principle it ought to work with all equivalent modules
+    however each module has a slightly different interface when it comes
+    to file uploads and so requires slightly different test code.
 
 =head1 INTERFACE 
 
@@ -326,29 +327,21 @@ This is the name of form parameter. It must be a scalar.
 This is the value of the form parameter. It should either be
 a scalar or an array reference of scalars.
 
-=item C<file_name>
+=item C<file>
 
 Where a form parameter represents a file, this is the name of that file.
 It is optional since it is possible that a browser may not send it.
 
-=item C<size>
-
-This specifies the size of the file to be created. It is always an optional parameter.
-
-=item C<width>, C<height>
-
-The dimensions of image files.
-
 =item C<type>
 
-The type of image files.
+The MIME type of the content. This defaults to 'text/plain'.
 
 =back
 
 =head2 new
 
 An instance of this class might best be thought of as a "CGI object factory".
-Currently the constructor takes no parameters.
+The constructor takes no parameters.
 
 =head2 create_cgi
 
@@ -360,7 +353,8 @@ This returns a CGI object created according to the specification encapsulated in
 
 =item The environment variables are set.
 
-=item A pipe is created. The far end of the pipe is attached to our standard input. And the MIME content is pushed through the pipe.
+=item A pipe is created. The far end of the pipe is attached to our standard
+input and the MIME content is pushed through the pipe.
 
 =item The appropriate CGI class is required.
 
@@ -381,7 +375,8 @@ This can be used to set a single form parameter. It takes two named arguments C<
 This retrieves a single form parameter. It takes a single named
 parameter: C<name>. The data returned will be a list either of scalar
 values or (in the case of a file upload) of HASHREFs. The HASHREFs would have
-the following fields: C<file>, C<value> and C<type> representing the file name, the content and the MIME type respectively.
+the following fields: C<file>, C<value> and C<type> representing the parameter
+name, the file name, the content and the MIME type respectively.
 
 =head2 get_names
 
@@ -389,7 +384,15 @@ This returns a list of stashed parameter names.
 
 =head2 upload_file
 
-This method takes two mandatory named parameters: C<name> and C<value> and two optional parameters C<type> and C<file>. Unlike the C<set_param> method this will not override previous settings for this parameter but will add. However setting a normal parameter and then n upload on the same name will throw an error.
+In the abscence of any defined callbacks, this method takes two mandatory named
+parameters: C<name> and C<value> and two optional parameters C<type> and
+C<file>. If there are any callbacks then the parameters are passed through each
+of the callbacks and must meet the standard parmeter requirements by the time
+all the callbacks have been called.
+
+Unlike the C<set_param> method this will not override previous
+settings for this parameter but will add. However setting a normal parameter
+and then an upload on the same name will throw an error.
 
 =head1 DIAGNOSTICS
 
@@ -407,7 +410,6 @@ The parameter was being used for both for file upload and normal
 parameters.
 
 =back
-
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
@@ -431,11 +433,6 @@ environment variables:
 I would like to get this working with L<CGI::Lite::Request> and L<Apache::Request> if that makes sense. So far I have not managed that.
 
 =head1 BUGS AND LIMITATIONS
-
-This software is not tested and does not yet contain enough functionality
-to meet even its most basic goals.
-
-It is now at the point where it actually needs to grapple with MIME.
 
 No bugs have been reported.
 

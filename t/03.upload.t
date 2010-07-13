@@ -5,8 +5,6 @@ use Test::More;
 use Test::CGI::Multipart;
 use Test::Exception;
 use Readonly;
-use lib qw(/home/nicholas/git/CGI.pm/lib);
-use CGI;
 use lib qw(t/lib);
 use Utils;
 Readonly my $PETS => ['Rex','Oscar','Bidgie','Fish'];
