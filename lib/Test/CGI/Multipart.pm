@@ -43,7 +43,6 @@ Readonly my $TYPE_SPEC => {
 };
 Readonly my $FILE_SPEC => {
     type=>SCALAR,
-    optional=>1,
 };
 Readonly my $MIME_SPEC => {
     type=>OBJECT,
@@ -54,7 +53,6 @@ sub new {
     my $class = shift;
     my $self = {
         file_index=>0,
-        boundary_count=>0,
         params=>{},
     };
     bless $self, $class;
@@ -229,12 +227,10 @@ sub _attach_file {
         }
     );
     my %attach = (
-        'Content-Disposition'=>"form-data; name=\"$params{name}\"",
+        'Content-Disposition'=>
+            "form-data; name=\"$params{name}\"; filename=\"$params{file}\"",
         Data=>$params{value},
     );
-    if ($params{file}) {
-        $attach{'Content-Disposition'} .= "; filename=\"$params{file}\"";
-    }
     if ($params{type}) {
         $attach{Type} = $params{type};
     }
@@ -330,7 +326,6 @@ a scalar or an array reference of scalars.
 =item C<file>
 
 Where a form parameter represents a file, this is the name of that file.
-It is optional since it is possible that a browser may not send it.
 
 =item C<type>
 
@@ -384,9 +379,9 @@ This returns a list of stashed parameter names.
 
 =head2 upload_file
 
-In the abscence of any defined callbacks, this method takes two mandatory named
-parameters: C<name> and C<value> and two optional parameters C<type> and
-C<file>. If there are any callbacks then the parameters are passed through each
+In the abscence of any defined callbacks, this method takes three mandatory
+named parameters: C<name>, C<file> and C<value> and one optional parameter
+C<type>. If there are any callbacks then the parameters are passed through each
 of the callbacks and must meet the standard parmeter requirements by the time
 all the callbacks have been called.
 
