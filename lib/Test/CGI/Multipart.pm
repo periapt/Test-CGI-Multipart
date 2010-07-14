@@ -12,6 +12,10 @@ use version; our $VERSION = qv('0.0.1');
 
 # Module implementation here
 
+# Make callbacks a package variable as then loading callbacks
+# will be prettier.
+my @callbacks;
+
 # Parameter specs
 # Note the purpose of these spcs is to protect our data structures.
 # It should not protect the code that will be tested
@@ -57,7 +61,6 @@ sub new {
     my $self = {
         file_index=>0,
         params=>{},
-        callbacks=>[],
     };
     bless $self, $class;
     return $self;
@@ -79,7 +82,7 @@ sub upload_file {
     my %params = @_;
     my $params = \%params;
 
-    foreach my $code (@{$self->{callbacks}}) {
+    foreach my $code (@callbacks) {
         $params = &$code($params);
     }
 
@@ -265,7 +268,7 @@ sub register_callback {
                 callback => $CODE_SPEC,
         }
     );
-    push @{$self->{callbacks}}, $params{callback};
+    push @callbacks, $params{callback};
     return;
 }
 
