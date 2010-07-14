@@ -48,12 +48,16 @@ Readonly my $MIME_SPEC => {
     type=>OBJECT,
     isa=>'MIME::Entity',
 };
+Readonly my $CODE_SPEC => {
+    type=>CODEREF,
+};
 
 sub new {
     my $class = shift;
     my $self = {
         file_index=>0,
         params=>{},
+        callbacks=>[],
     };
     bless $self, $class;
     return $self;
@@ -71,6 +75,21 @@ sub set_param {
 }
 
 sub upload_file {
+    my $self = shift;
+    my %params = @_;
+    my $params = \%params;
+
+    foreach my $code (@{$self->{callbacks}}) {
+        $params = &$code($params);
+    }
+
+    $self->_upload_file(%$params);
+
+    return;
+}
+
+
+sub _upload_file {
     my $self = shift;
     my %params = validate(@_, {
                     name=>$NAME_SPEC,
@@ -240,6 +259,17 @@ sub _attach_file {
     return;
 }
 
+sub register_callback {
+    my $self = shift;
+    my %params = validate(@_, {
+                callback => $CODE_SPEC,
+        }
+    );
+    push @{$self->{callbacks}}, $params{callback};
+    return;
+}
+
+
 1; # Magic true value required at end of module
 __END__
 
@@ -388,6 +418,16 @@ all the callbacks have been called.
 Unlike the C<set_param> method this will not override previous
 settings for this parameter but will add. However setting a normal parameter
 and then an upload on the same name will throw an error.
+
+=head2 register_callback
+
+Callbacks are used by the C<upload_file> method, to allow a file to be specified
+by properties rather than strict content. This method takes a single named
+parameter called C<callback>, which adds that callback to an internal array
+of callbacks. The idea being that the C<upload_file> method can take any
+arguments you like so long as after all the callbacks have been applied, the
+parameters consist of C<name>, C<file>, C<value> and possibly C<type>.
+A callback should take and return a single hash reference.
 
 =head1 DIAGNOSTICS
 
