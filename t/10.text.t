@@ -7,6 +7,13 @@ use Test::CGI::Multipart::Gen::Text;
 use Readonly;
 use lib qw(t/lib);
 use Utils;
+
+eval {require Text::Lorem;};
+if ($@) {
+    my $msg = "This test requires Text::Lorem";
+    plan skip_all => $msg;
+}
+
 Readonly my $PETS => ['Rex','Oscar','Bidgie','Fish'];
 
 my @cgi_modules = Utils::get_cgi_modules;

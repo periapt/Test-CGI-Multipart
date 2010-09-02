@@ -20,6 +20,9 @@ my $builder = Module::Build->new(
         'Readonly' => 0,
         'Params::Validate'=>0,
     },
+    recommends => {
+        'Text::Lorem' => 0,
+    },
     meta_merge => {
         resources => {
             repository =>
