@@ -22,6 +22,7 @@ my @callbacks;
 # as that must look after itself.
 Readonly my $NAME_SPEC => {type=>SCALAR};
 Readonly my $VALUE_SPEC => {type=>SCALAR|ARRAYREF};
+Readonly my $UA_SPEC => {type=>SCALAR, default=> 'Test::CGI::Multipart'};
 Readonly my $CGI_SPEC => {
     type=>SCALAR,
     default=>'CGI',
@@ -136,7 +137,7 @@ sub get_names {
 sub create_cgi {
     use autodie qw(open);
     my $self = shift;
-    my %params = validate(@_, {cgi=>$CGI_SPEC});
+    my %params = validate(@_, {cgi=>$CGI_SPEC, ua=>$UA_SPEC});
 
     my $mime = $self->_mime_data;
     my $mime_string = $mime->stringify;
@@ -148,6 +149,7 @@ sub create_cgi {
     $ENV{REQUEST_METHOD}='POST';
     $ENV{CONTENT_TYPE}="multipart/form-data; boundary=$boundary";
     $ENV{CONTENT_LENGTH}=length($mime_string);
+    $ENV{HTTP_USER_AGENT}=$params{ua};
 
     # Would like to localize these but this causes problems with CGI::Simple.
     local *STDIN;
@@ -363,6 +365,10 @@ Where a form parameter represents a file, this is the name of that file.
 
 The MIME type of the content. This defaults to 'text/plain'.
 
+=item C<ua>
+
+The HTTP_USER_AGENT environment variable. This defaults to 'Test::CGI::Multipart'.
+
 =back
 
 =head2 new
@@ -391,7 +397,7 @@ input and the MIME content is pushed through the pipe.
 
 =back
 
-As far as I can see this simulates what happens when a CGI script processes a multi-part POST form. One can specify a different CGI class using the C<cgi> named parameter.
+As far as I can see this simulates what happens when a CGI script processes a multi-part POST form. One can specify a different CGI class using the C<cgi> named parameter. One can set the HTTP_USER_AGENT environment variable with the C<ua> parameter.
 
 =head2 set_param
 
@@ -462,6 +468,8 @@ environment variables:
 =item CONTENT_LENGTH
 
 =item CONTENT_TYPE
+
+=item HTTP_USER_AGENT
 
 =back
 
