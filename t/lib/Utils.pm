@@ -34,9 +34,6 @@ sub get_expected {
             if (!exists $e->{type}) {
                 $e->{type} = 'text/plain';
             }
-#            if (!exists $e->{file}) {
-#                $e->{file} = '';
-#            }
         }
     }
     return \@expected;

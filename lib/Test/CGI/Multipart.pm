@@ -265,7 +265,7 @@ sub _attach_file {
 sub register_callback {
     my $self = shift;
     my %params = validate(@_, {
-                callback => $CODE_SPEC,
+            callback => $CODE_SPEC,
         }
     );
     push @callbacks, $params{callback};
@@ -283,7 +283,6 @@ Test::CGI::Multipart - Test posting of multi-part form data
 =head1 VERSION
 
 This document describes Test::CGI::Multipart version 0.0.1
-
 
 =head1 SYNOPSIS
 

@@ -3,16 +3,14 @@ use strict;
 use warnings;
 use Test::More;
 use Test::CGI::Multipart;
+use Test::CGI::Multipart::Gen::Text;
 use Readonly;
 use lib qw(t/lib);
 use Utils;
-use FilePop;
-use AddParam;
-use AddValue;
 Readonly my $PETS => ['Rex','Oscar','Bidgie','Fish'];
 
 my @cgi_modules = Utils::get_cgi_modules;
-plan tests => 12+6*@cgi_modules;
+plan tests => 7+3*@cgi_modules;
 
 my $tcm = Test::CGI::Multipart->new;
 isa_ok($tcm, 'Test::CGI::Multipart');
@@ -35,24 +33,16 @@ is_deeply(\@values, $PETS, 'get param');
 @names= sort $tcm->get_names;
 is_deeply(\@names, ['first_name','pets'], 'names deep');
 
-ok(!defined $tcm->upload_file(), 'uploading blah file');
+ok(!defined $tcm->upload_file(
+    name=>'uninteresting',
+    file=>'other.blah',
+    type=>'application/blah',
+    value=>'Fee Fi Fo Fum',
+), 'uploading other file');
 @names= sort $tcm->get_names;
-is_deeply(\@names, ['files', 'first_name', 'pets'], 'names deep');
-
-ok(!defined $tcm->upload_file(), 'uploading blah file');
-@names= sort $tcm->get_names;
-is_deeply(\@names, ['files', 'first_name', 'pets'], 'names deep');
-
-ok(!defined $tcm->upload_file(), 'uploading blah file');
-@names= sort $tcm->get_names;
-is_deeply(\@names, ['files', 'files2', 'first_name', 'pets'], 'names deep');
+is_deeply(\@names, ['first_name', 'pets', 'uninteresting'], 'names deep');
 
 foreach my $class (@cgi_modules) {
-SKIP: {
-
-    if (defined $class and $class eq 'CGI::Simple') {
-        skip 'CGI::Simple apparently does not support multiple files', 5;
-    }
 
     if ($class) {
         diag "Testing with $class";
@@ -68,7 +58,7 @@ SKIP: {
     isa_ok($cgi, $class||'CGI', 'created CGI object okay');
 
     @names = grep {$_ ne '' and $_ ne '.submit'} sort $cgi->param;
-    is_deeply(\@names, ['files', 'files2', 'first_name','pets'], 'names deep');
+    is_deeply(\@names, ['first_name','pets', 'uninteresting'], 'names deep');
     foreach my $name (@names) {
         my $expected = Utils::get_expected($tcm, $name);
         my $got = undef;
@@ -83,7 +73,6 @@ SKIP: {
         is_deeply($got, $expected, $name);
     }
 
-    }
 }
 
 
