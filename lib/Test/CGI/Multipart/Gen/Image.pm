@@ -14,49 +14,36 @@ use version; our $VERSION = qv('0.0.1');
 Test::CGI::Multipart->register_callback(
     callback => sub {
         my $hashref = shift;
-        my %done;       # So we know what not to apply to GD::Simple
 
+        my %to_delete;
         return $hashref if exists $hashref->{value};
 
         # If the MIME type is not explicitly image/* its not ours.
         return $hashref if not exists $hashref->{type};
         return $hashref if $hashref->{type} !~ m{\Aimage/(\w+)\z}xms;
         my $type = $1;
-        $done{type} = 1;
 
         # get dimensions
         croak "no width specified" if not exists $hashref->{width};
         my $width = $hashref->{width};
-        $done{width} = 1;
+        $to_delete{width} = 1;
         croak "no height specified" if not exists $hashref->{height};
         my $height = $hashref->{height};
-        $done{height} = 1;
+        $to_delete{height} = 1;
 
-        foreach my $other (qw(file name)) {
-            if (exists $hashref->{$other}) {
-                $done{$other} = 1;
-            }
-            else {
-                croak "no $other parameter";
-            }
-        }
-
-        my %to_delete;
         my $image = GD::Simple->new($width, $height);
-        if ($image->can($type)) {
-            $to_delete{width} = 1;
-            $to_delete{height} = 1;
-        }
-        else {
-            return $hashref;
-        }
-
         foreach my $key (keys %$hashref) {
-            next if exists $done{$key};
-            next if not $image->can($key);
+            next if $key eq 'file';
+            next if $key eq 'name';
+            next if $key eq 'type';
+            next if exists $to_delete{$key};
             my $value = $hashref->{$key};
             my @args = ref $value eq 'ARRAY' ? @$value : $value;
-            $image->$key(@args);
+            eval{$image->$key(@args)};
+            if ($@) {
+                warn "GD: $@";
+                return $hashref;
+            }
             $to_delete{$key} = 1;
         }
 

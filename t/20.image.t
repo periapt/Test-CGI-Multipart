@@ -46,7 +46,7 @@ ok(!defined $tcm->upload_file(
         type=>'image/jpeg'
 ), 'image');
 @names= sort $tcm->get_names;
-is_deeply(\@names, ['first_name', 'pets', 'image'], 'names deep');
+is_deeply(\@names, ['first_name', 'image', 'pets'], 'names deep');
 
 foreach my $class (@cgi_modules) {
 
@@ -64,7 +64,7 @@ foreach my $class (@cgi_modules) {
     isa_ok($cgi, $class||'CGI', 'created CGI object okay');
 
     @names = grep {$_ ne '' and $_ ne '.submit'} sort $cgi->param;
-    is_deeply(\@names, ['first_name','pets', 'uninteresting'], 'names deep');
+    is_deeply(\@names, ['first_name', 'image', 'pets'], 'names deep');
     foreach my $name (@names) {
         my $expected = Utils::get_expected($tcm, $name);
         my $got = undef;
