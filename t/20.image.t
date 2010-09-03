@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Test::More;
 use Test::CGI::Multipart;
-use Test::CGI::Multipart::Gen::Text;
+use Test::CGI::Multipart::Gen::Image;
 use Readonly;
 use lib qw(t/lib);
 use Utils;
@@ -34,13 +34,19 @@ is_deeply(\@values, $PETS, 'get param');
 is_deeply(\@names, ['first_name','pets'], 'names deep');
 
 ok(!defined $tcm->upload_file(
-    name=>'uninteresting',
-    file=>'other.blah',
-    type=>'application/blah',
-    value=>'Fee Fi Fo Fum',
-), 'uploading other file');
+        name=>'image',
+        file=>'cleopatra.doc',
+        width=>1000,
+        height=>1000,
+        font=>'Times:italic',
+        bgcolor=>'red',
+        fgcolor=>'blue',
+        fontsize=>20,
+        string=>'Cleopatra',
+        type=>'image/jpeg'
+), 'image');
 @names= sort $tcm->get_names;
-is_deeply(\@names, ['first_name', 'pets', 'uninteresting'], 'names deep');
+is_deeply(\@names, ['first_name', 'pets', 'image'], 'names deep');
 
 foreach my $class (@cgi_modules) {
 

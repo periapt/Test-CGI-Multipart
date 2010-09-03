@@ -5,6 +5,7 @@ use strict;
 use Carp;
 use Readonly;
 use Test::CGI::Multipart;
+use GD::Simple;
 
 use version; our $VERSION = qv('0.0.1');
 
@@ -13,11 +14,63 @@ use version; our $VERSION = qv('0.0.1');
 Test::CGI::Multipart->register_callback(
     callback => sub {
         my $hashref = shift;
+        my %done;       # So we know what not to apply to GD::Simple
 
-        # If the MIME type is not text/plain its not ours.
-        return $hashref if $hashref->{type} !~ m{\Aimage/\w+\z}xms;
+        return $hashref if exists $hashref->{value};
 
-    
+        # If the MIME type is not explicitly image/* its not ours.
+        return $hashref if not exists $hashref->{type};
+        return $hashref if $hashref->{type} !~ m{\Aimage/(\w+)\z}xms;
+        my $type = $1;
+        $done{type} = 1;
+
+        # get dimensions
+        croak "no width specified" if not exists $hashref->{width};
+        my $width = $hashref->{width};
+        $done{width} = 1;
+        croak "no height specified" if not exists $hashref->{height};
+        my $height = $hashref->{height};
+        $done{height} = 1;
+
+        foreach my $other (qw(file name)) {
+            if (exists $hashref->{$other}) {
+                $done{$other} = 1;
+            }
+            else {
+                croak "no $other parameter";
+            }
+        }
+
+        my %to_delete;
+        my $image = GD::Simple->new($width, $height);
+        if ($image->can($type)) {
+            $to_delete{width} = 1;
+            $to_delete{height} = 1;
+        }
+        else {
+            return $hashref;
+        }
+
+        foreach my $key (keys %$hashref) {
+            next if exists $done{$key};
+            next if not $image->can($key);
+            my $value = $hashref->{$key};
+            my @args = ref $value eq 'ARRAY' ? @$value : $value;
+            $image->$key(@args);
+            $to_delete{$key} = 1;
+        }
+
+        $hashref->{value} = eval {$image->$type};
+        if ($@) {
+            warn "GD: $@";
+            delete $hashref->{value};
+            return $hashref;
+        }
+
+        foreach my $del (keys %to_delete) {
+            delete $hashref->{$del};
+        }
+
         return $hashref;
     }
 );
@@ -43,20 +96,16 @@ This document describes Test::CGI::Multipart::Gen::Image version 0.0.1
 
     # specify the form parameters
     $tcm->upload_file(
-        name='cv',
-        file=>'cv.doc',
-        paragraphs=>6,
-        type=>'text/plain'
-    );
-    $tcm->upload_file(
-        name=>'sample_work',
-        type=>'text/plain',
-        value=>[
-            'Blah Blah Blah....', 
-            'To be or not to be.',
-            'Are we there yet?',
-        ],
-        size=>2000
+        name='Image',
+        file=>'cleopatra.doc',
+        width=>1000,
+        height=>1000,
+        font=>'Times:italic',
+        bgcolor=>'red',
+        fgcolor=>'blue',
+        fontsize=>20,
+        string=>'Cleopatra',
+        type=>'image/jpeg'
     );
     $tcm->set_param(name=>'first_name',value=>'Jim');
     $tcm->set_param(name=>'last_name',value=>'Hacker');
@@ -72,102 +121,39 @@ This document describes Test::CGI::Multipart::Gen::Image version 0.0.1
 
     This is a callback package for L<Test::CGI::Multipart> that facilitates 
     the testing of the upload of text files of a given size and sample content.
+    One can specify the dimensions of the image and the size, font and colours
+    of a simple string.
 
 =head1 INTERFACE 
 
-Several of the methods below take named parameters. For convenience we define those parameters here:
+For information on how to use this module, see L<Test::CGI::Multipart>
+especially the section on callbacks. What this module offers is that if
+the C<type> parameter begins with 'image/' and there is no C<value>
+parameter you can specify various human
+comprehensible inputs into the image rather than the raw binary.
+In particular this covers what appears to be common use cases in testing
+image upload: namely images of various types, file sizes and dimensions.
 
 =over 
 
-=item C<cgi>
-
-This option defines the CGI module. It should be a scalar consisting only
-of alphanumeric characters and C<::>. It defaults to 'CGI'.
-
-=item C<name>
-
-This is the name of form parameter. It must be a scalar.
-
-=item C<value>
-
-This is the value of the form parameter. It should either be
-a scalar or an array reference of scalars.
-
-=item C<file>
-
-Where a form parameter represents a file, this is the name of that file.
-
 =item C<type>
 
-The MIME type of the content. This defaults to 'text/plain'.
+The MIME type of the content. For this module to be interested
+this parameter must be set, and must begin with 'image/'.
+What follows is taken to be the image format and is treated as a 
+function to the L<GD::Image> module.
+
+=item C<width>, C<height>
+
+These are the requested dimensions of the proposed image. They are
+mandatory parameters.
+
+=item C<font>, C<fontsize>, C<bgcolor>, C<fgcolor>, C<string>
+
+These parameters are passed straight through to the L<GD::Simple>
+module.
 
 =back
-
-=head2 new
-
-An instance of this class might best be thought of as a "CGI object factory".
-The constructor takes no parameters.
-
-=head2 create_cgi
-
-This returns a CGI object created according to the specification encapsulated in the object. The exact mechanics are as follows:
-
-=over
-
-=item The parameters are packaged up in MIME format.
-
-=item The environment variables are set.
-
-=item A pipe is created. The far end of the pipe is attached to our standard
-input and the MIME content is pushed through the pipe.
-
-=item The appropriate CGI class is required.
-
-=item Uploads are enabled if the CGI class is L<CGI::Simple>.
-
-=item The CGI object is created and returned.
-
-=back
-
-As far as I can see this simulates what happens when a CGI script processes a multi-part POST form. One can specify a different CGI class using the C<cgi> named parameter.
-
-=head2 set_param
-
-This can be used to set a single form parameter. It takes two named arguments C<name> and C<value>. Note that this method overrides any previous settings including file uploads.
-
-=head2 get_param
-
-This retrieves a single form parameter. It takes a single named
-parameter: C<name>. The data returned will be a list either of scalar
-values or (in the case of a file upload) of HASHREFs. The HASHREFs would have
-the following fields: C<file>, C<value> and C<type> representing the parameter
-name, the file name, the content and the MIME type respectively.
-
-=head2 get_names
-
-This returns a list of stashed parameter names.
-
-=head2 upload_file
-
-In the abscence of any defined callbacks, this method takes three mandatory
-named parameters: C<name>, C<file> and C<value> and one optional parameter
-C<type>. If there are any callbacks then the parameters are passed through each
-of the callbacks and must meet the standard parmeter requirements by the time
-all the callbacks have been called.
-
-Unlike the C<set_param> method this will not override previous
-settings for this parameter but will add. However setting a normal parameter
-and then an upload on the same name will throw an error.
-
-=head2 register_callback
-
-Callbacks are used by the C<upload_file> method, to allow a file to be specified
-by properties rather than strict content. This method takes a single named
-parameter called C<callback>, which adds that callback to an internal array
-of callbacks. The idea being that the C<upload_file> method can take any
-arguments you like so long as after all the callbacks have been applied, the
-parameters consist of C<name>, C<file>, C<value> and possibly C<type>.
-A callback should take and return a single hash reference.
 
 =head1 DIAGNOSTICS
 
@@ -188,24 +174,7 @@ parameters.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-Test::CGI::Multipart requires no configuration files or environment variables.
-
-However it should be noted that the module will overwrite the following 
-environment variables:
-
-=over
-
-=item REQUEST_METHOD
-
-=item CONTENT_LENGTH
-
-=item CONTENT_TYPE
-
-=back
-
-=head1 INCOMPATIBILITIES
-
-I would like to get this working with L<CGI::Lite::Request> and L<Apache::Request> if that makes sense. So far I have not managed that.
+Test::CGI::Multipart::Gen::Image requires no configuration files or environment variables.
 
 =head1 BUGS AND LIMITATIONS
 
