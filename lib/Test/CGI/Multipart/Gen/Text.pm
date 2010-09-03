@@ -17,8 +17,9 @@ Test::CGI::Multipart->register_callback(callback => \&_random_text_cb);
 sub _random_text_cb {
     my $href = shift;
 
-    # If the MIME type is not text/plain its not ours.
-    return $href if exists $href->{type} && $href->{type} ne 'text/plain';
+    # If the MIME type is not explicitly text/plain its not ours.
+    return $href if !exists $href->{type};
+    return $href if $href->{type} ne 'text/plain';
 
     return $href if exists $href->{value};
 

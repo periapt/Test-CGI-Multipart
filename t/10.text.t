@@ -4,6 +4,7 @@ use warnings;
 use Test::More;
 use Test::CGI::Multipart;
 use Test::CGI::Multipart::Gen::Text;
+use Test::Exception;
 use Readonly;
 use lib qw(t/lib);
 use Utils;
@@ -20,7 +21,7 @@ Readonly my $NAMES => ['first_name', 'paragraphs', 'pets', 'sentences', 'uninter
 Readonly my $PARAGRAPH => qq{Reprehenderit similique a accusamus neque ad quaerat. Iusto temporibus consequuntur vitae earum accusantium sequi eum sequi. Debitis et voluptatem ipsam assumenda odit assumenda.\n\nOmnis velit est non quas. Iusto est in harum laudantium harum eos sapiente. Ducimus quia tenetur ea. Aut tenetur maiores in et voluptatem. Et veritatis tenetur delectus repellendus aut sunt veniam sapiente.};
 
 my @cgi_modules = Utils::get_cgi_modules;
-plan tests => 18+(2+scalar @$NAMES)*@cgi_modules;
+plan tests => 19+(2+scalar @$NAMES)*@cgi_modules;
 
 my $tcm = Test::CGI::Multipart->new;
 isa_ok($tcm, 'Test::CGI::Multipart');
@@ -54,6 +55,7 @@ is_deeply(\@names, ['first_name', 'pets', 'uninteresting'], 'names deep');
 ok(!defined $tcm->upload_file(
     name=>'words',
     file=>'words.txt',
+    type=>'text/plain',
     words=>5,
     sentences=>2,
     paragraphs=>2,
@@ -65,6 +67,7 @@ is_deeply(Utils::get_expected($tcm, 'words'), [{name=>'words',value=>'ipsum plac
 ok(!defined $tcm->upload_file(
     name=>'sentences',
     file=>'sentences.txt',
+    type=>'text/plain',
     sentences=>2,
     paragraphs=>2,
 ), 'uploading other file');
@@ -75,11 +78,18 @@ is_deeply(Utils::get_expected($tcm, 'sentences'), [{name=>'sentences',value=>'El
 ok(!defined $tcm->upload_file(
     name=>'paragraphs',
     file=>'paragraphs.txt',
+    type=>'text/plain',
     paragraphs=>2,
 ), 'uploading other file');
 @names= sort $tcm->get_names;
 is_deeply(\@names, $NAMES);
 is_deeply(Utils::get_expected($tcm, 'paragraphs')->[0]->{value}, Utils::norm_eol($PARAGRAPH), 'paragraphs');
+
+throws_ok {$tcm->upload_file(
+    name=>'paragraphs',
+    file=>'paragraphs.txt',
+    type=>'text/plain',
+)} qr/No words, sentences or paragraphs specified/, 'inadequately specified';
 
 foreach my $class (@cgi_modules) {
 
