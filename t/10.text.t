@@ -7,6 +7,7 @@ use Test::CGI::Multipart::Gen::Text;
 use Readonly;
 use lib qw(t/lib);
 use Utils;
+srand(0);
 
 eval {require Text::Lorem;};
 if ($@) {
@@ -15,9 +16,9 @@ if ($@) {
 }
 
 Readonly my $PETS => ['Rex','Oscar','Bidgie','Fish'];
-
+Readonly my $NAMES => ['first_name', 'pets', 'sentences', 'uninteresting', 'words'];
 my @cgi_modules = Utils::get_cgi_modules;
-plan tests => 11+6*@cgi_modules;
+plan tests => 15+(2+scalar @$NAMES)*@cgi_modules;
 
 my $tcm = Test::CGI::Multipart->new;
 isa_ok($tcm, 'Test::CGI::Multipart');
@@ -57,6 +58,18 @@ ok(!defined $tcm->upload_file(
 ), 'uploading other file');
 @names= sort $tcm->get_names;
 is_deeply(\@names, ['first_name', 'pets', 'uninteresting', 'words'], 'names deep');
+is_deeply(Utils::get_expected($tcm, 'words'), [{name=>'words',value=>'ipsum placeat explicabo accusamus in',file=>'words.txt',type=>'text/plain'}], 'words');
+
+ok(!defined $tcm->upload_file(
+    name=>'sentences',
+    file=>'sentences.txt',
+    sentences=>2,
+    paragraphs=>2,
+), 'uploading other file');
+@names= sort $tcm->get_names;
+is_deeply(\@names, $NAMES);
+is_deeply(Utils::get_expected($tcm, 'sentences'), [{name=>'sentences',value=>'Eligendi consequatur officiis maxime ducimus ex minus quaerat. Omnis nulla in porro vitae blanditiis.',file=>'sentences.txt',type=>'text/plain'}], 'sentences');
+
 
 foreach my $class (@cgi_modules) {
 
@@ -74,7 +87,7 @@ foreach my $class (@cgi_modules) {
     isa_ok($cgi, $class||'CGI', 'created CGI object okay');
 
     @names = grep {$_ ne '' and $_ ne '.submit'} sort $cgi->param;
-    is_deeply(\@names, ['first_name','pets', 'uninteresting', 'words'], 'names deep');
+    is_deeply(\@names, $NAMES, 'names deep');
     foreach my $name (@names) {
         my $expected = Utils::get_expected($tcm, $name);
         my $got = undef;
