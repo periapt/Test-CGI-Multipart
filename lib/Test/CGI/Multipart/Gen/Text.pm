@@ -102,11 +102,6 @@ L<Text::Lorem>. Of these the highest priority is C<words>, then C<sentences>.
 This module does require that at least one of the three
 L<Text::Lorem> parameters is provided.
 
-=item C<< mismatch: is %s a file upload or not >>
-
-The parameter was being used for both for file upload and normal
-parameters.
-
 =back
 
 =head1 CONFIGURATION AND ENVIRONMENT

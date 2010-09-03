@@ -16,9 +16,11 @@ if ($@) {
 }
 
 Readonly my $PETS => ['Rex','Oscar','Bidgie','Fish'];
-Readonly my $NAMES => ['first_name', 'pets', 'sentences', 'uninteresting', 'words'];
+Readonly my $NAMES => ['first_name', 'paragraphs', 'pets', 'sentences', 'uninteresting', 'words'];
+Readonly my $PARAGRAPH => qq{Reprehenderit similique a accusamus neque ad quaerat. Iusto temporibus consequuntur vitae earum accusantium sequi eum sequi. Debitis et voluptatem ipsam assumenda odit assumenda.\n\nOmnis velit est non quas. Iusto est in harum laudantium harum eos sapiente. Ducimus quia tenetur ea. Aut tenetur maiores in et voluptatem. Et veritatis tenetur delectus repellendus aut sunt veniam sapiente.};
+
 my @cgi_modules = Utils::get_cgi_modules;
-plan tests => 15+(2+scalar @$NAMES)*@cgi_modules;
+plan tests => 18+(2+scalar @$NAMES)*@cgi_modules;
 
 my $tcm = Test::CGI::Multipart->new;
 isa_ok($tcm, 'Test::CGI::Multipart');
@@ -67,9 +69,17 @@ ok(!defined $tcm->upload_file(
     paragraphs=>2,
 ), 'uploading other file');
 @names= sort $tcm->get_names;
-is_deeply(\@names, $NAMES);
+is_deeply(\@names, ['first_name', 'pets', 'sentences', 'uninteresting', 'words']);
 is_deeply(Utils::get_expected($tcm, 'sentences'), [{name=>'sentences',value=>'Eligendi consequatur officiis maxime ducimus ex minus quaerat. Omnis nulla in porro vitae blanditiis.',file=>'sentences.txt',type=>'text/plain'}], 'sentences');
 
+ok(!defined $tcm->upload_file(
+    name=>'paragraphs',
+    file=>'paragraphs.txt',
+    paragraphs=>2,
+), 'uploading other file');
+@names= sort $tcm->get_names;
+is_deeply(\@names, $NAMES);
+is_deeply(Utils::get_expected($tcm, 'paragraphs')->[0]->{value}, Utils::norm_eol($PARAGRAPH), 'paragraphs');
 
 foreach my $class (@cgi_modules) {
 
