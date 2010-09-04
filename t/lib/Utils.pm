@@ -34,7 +34,9 @@ sub get_expected {
             if (!exists $e->{type}) {
                 $e->{type} = 'text/plain';
             }
-            $e->{value} = norm_eol($e->{value});
+            if ($e->{type} eq 'text/plain') {
+                $e->{value} = norm_eol($e->{value});
+            }
         }
     }
     return \@expected;
