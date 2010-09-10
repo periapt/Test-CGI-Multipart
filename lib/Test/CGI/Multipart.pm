@@ -60,8 +60,7 @@ Readonly my $CODE_SPEC => {
 # MIME parsing states
 Readonly my $TYPE_STATE => 0;
 Readonly my $HEADER_STATE => 1;
-Readonly my $BOUNDARY_STATE => 2;
-Readonly my $DATA_STATE=> 3;
+Readonly my $DATA_STATE=> 2;
 
 sub new {
     my $class = shift;
@@ -184,8 +183,7 @@ sub _normalize {
     # start -> TYPE_STATE
     # TYPE_STATE -> HEADER_STATE
     # HEADER_STATE -> HEADER_STATE | DATA_STATE
-    # DATA_STATE -> DATA_STATE, BOUNDARY_STATE
-    # BOUNDARY_STATE -> TYPE_STATE, end
+    # DATA_STATE -> DATA_STATE | TYPE_STATE | end
     my @boundaries;
     while(pos $mime_string < length $mime_string) {
         if ($state == $TYPE_STATE) {
@@ -203,6 +201,17 @@ sub _normalize {
                 my $line = $1;
                 my $boundary = $2;
                 push @boundaries, $boundary;
+                $state = $HEADER_STATE;
+                $new_mime_string .= "$line\015\012";
+            }
+            elsif ($mime_string =~ m{
+                                \G             # Pick up where we left it
+                                (              # start of capture
+                                    Content\-Type:
+                                    \s+
+                                    [^\n]+
+                                )\n}xmsgc) {
+                my $line = $1;
                 $state = $HEADER_STATE;
                 $new_mime_string .= "$line\015\012";
             }
@@ -237,11 +246,32 @@ sub _normalize {
                 croak "Help!";
             }               
         }
-        elsif ($mime_string =~ m{\G([^\n]*)\n}xmsgc) {
-            $new_mime_string .= "$1\015\012";
-        }
-        elsif ($mime_string =~ m{\G([^\n]+)\z}xmsgc) {
-            $mime_string .= $1;
+        elsif ($state == $DATA_STATE) {
+            my $boundary = pop @boundaries;
+            if ($mime_string =~ m{
+                                \G
+                                (--$boundary(?:--)?)
+                                \n}xmsgc) {
+                my $line = $1;
+                $new_mime_string .= "$line\015\012";
+                $state = $TYPE_STATE;
+                push @boundaries, $boundary;
+            }
+            elsif ($mime_string =~ m{
+                                \G
+                                ([^\n]*)
+                                \n}xmsgc) {
+                my $line = $1;
+                $new_mime_string .= "$line\n";
+                push @boundaries, $boundary;
+            }
+            elsif ($mime_string =~ m{\G(.{0,10})}xmsgc) {
+                croak "$state: $1";
+            }
+            else {
+                croak "Help!";
+            }               
+            
         }
         else {
             croak "help!";
