@@ -61,8 +61,7 @@ Readonly my $CODE_SPEC => {
 Readonly my $TYPE_STATE => 0;
 Readonly my $HEADER_STATE => 1;
 Readonly my $BOUNDARY_STATE => 2;
-Readonly my $BETWEEN_STATE => 3;
-Readonly my $DATA_STATE=> 4;
+Readonly my $DATA_STATE=> 3;
 
 sub new {
     my $class = shift;
@@ -174,6 +173,8 @@ sub create_cgi {
 # However we must distinguish between data 
 # and real new lines.
 # Hence state.
+# If MIME::Entity handled CRLF correctly would not need this.
+# I have also looked at MIME::Fast and MIME::Lite.
 sub _normalize {
     my $self = shift;
     my $mime_string = shift;
@@ -182,8 +183,7 @@ sub _normalize {
     my $state = $TYPE_STATE;
     # start -> TYPE_STATE
     # TYPE_STATE -> HEADER_STATE
-    # HEADER_STATE -> HEADER_STATE | BETWEEN_STATE
-    # BETWEEN_STATE -> DATA_STATE 
+    # HEADER_STATE -> HEADER_STATE | DATA_STATE
     # DATA_STATE -> DATA_STATE, BOUNDARY_STATE
     # BOUNDARY_STATE -> TYPE_STATE, end
     my @boundaries;
@@ -213,6 +213,30 @@ sub _normalize {
                 croak "Help!";
             }               
         }   
+        elsif ($state == $HEADER_STATE) {
+            if ($mime_string =~ m{
+                                \G             # Pick up where we left it
+                                (              # start of capture
+                                    [\w-]+:
+                                    \s+
+                                    [^\n]+
+                                )\n}xmsgc) {
+                my $line = $1;
+                $new_mime_string .= "$line\015\012";
+            }
+            elsif ($mime_string =~ m{
+                                \G
+                                \n}xmsgc) {
+                $state = $DATA_STATE;
+                $new_mime_string .= "\015\012";
+            }
+            elsif ($mime_string =~ m{\G(.{0,10})}xmsgc) {
+                croak "$state: $1";
+            }
+            else {
+                croak "Help!";
+            }               
+        }
         elsif ($mime_string =~ m{\G([^\n]*)\n}xmsgc) {
             $new_mime_string .= "$1\015\012";
         }
