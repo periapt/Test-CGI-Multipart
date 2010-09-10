@@ -32,19 +32,21 @@ Test::CGI::Multipart->register_callback(
         $to_delete{height} = 1;
 
         my $image = GD::Simple->new($width, $height);
-        foreach my $key (keys %$hashref) {
-            next if $key eq 'file';
-            next if $key eq 'name';
-            next if $key eq 'type';
-            next if exists $to_delete{$key};
-            my $value = $hashref->{$key};
-            my @args = ref $value eq 'ARRAY' ? @$value : $value;
-            eval{$image->$key(@args)};
+
+        croak "no instructions specified"
+            if not exists $hashref->{instructions};
+        croak "intructions not a list"
+            if ref $hashref->{instructions} ne 'ARRAY';
+        my @instructions = @{$hashref->{instructions}};
+        $to_delete{instructions} = 1;
+
+        foreach my $instr (@instructions) {
+            my ($cmd, @args) = @$instr;
+            eval {$image->$cmd(@args)};
             if ($@) {
                 warn "GD: $@";
                 return $hashref;
             }
-            $to_delete{$key} = 1;
         }
 
         $hashref->{value} = eval {$image->$type};
@@ -85,13 +87,18 @@ This document describes Test::CGI::Multipart::Gen::Image version 0.0.1
     $tcm->upload_file(
         name='Image',
         file=>'cleopatra.doc',
-        width=>1000,
-        height=>1000,
-        font=>'Times:italic',
-        bgcolor=>'red',
-        fgcolor=>'blue',
-        fontsize=>20,
-        string=>'Cleopatra',
+        width=>400,
+        height=>250,
+        instructions=>[
+            ['bgcolor,'red'],
+            ['fgcolor','blue'],
+            ['rectangle',30,30,100,100],
+            ['moveTo',280,210],
+            ['font','Times:italic'],
+            ['fontsize',20],
+            ['angle',-90],
+            ['string','Helloooooooooooo world!'],
+        ],
         type=>'image/jpeg'
     );
     $tcm->set_param(name=>'first_name',value=>'Jim');

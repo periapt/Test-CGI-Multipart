@@ -57,6 +57,12 @@ Readonly my $CODE_SPEC => {
     type=>CODEREF,
 };
 
+# MIME parsing states
+Readonly my $HEADER_STATE => 0;
+Readonly my $BOUNDARY_STATE => 1;
+Readonly my $BETWEEN_STATE => 2;
+Readonly my $DATA_STATE=> 3;
+
 sub new {
     my $class = shift;
     my $self = {
@@ -140,10 +146,7 @@ sub create_cgi {
     my %params = validate(@_, {cgi=>$CGI_SPEC, ua=>$UA_SPEC});
 
     my $mime = $self->_mime_data;
-    my $mime_string = $mime->stringify;
-    $mime_string =~ s{
-                        \n      # MIME::Tools returns this rather than CRLF
-                    }{\015\012}xmsg;
+    my $mime_string = $self->_normalize($mime->stringify);
     my $boundary = $mime->head->multipart_boundary;
 
     $ENV{REQUEST_METHOD}='POST';
@@ -164,6 +167,26 @@ sub create_cgi {
 
     my $cgi = $params{cgi}->new;
     return $cgi;
+}
+
+sub _normalize {
+    my $self = shift;
+    my $mime_string = shift;
+    my $new_mime_string = "";
+    pos $mime_string = 0;
+    my $state = $HEADER_STATE;
+    while(pos $mime_string < length $mime_string) {
+        if ($mime_string =~ m{\G([^\n]*)\n}xmsgc) {
+            $new_mime_string .= "$1\015\012";
+        }
+        elsif ($mime_string =~ m{\G([^\n]+)\z}xmsgc) {
+            $mime_string .= $1;
+        }
+        else {
+            croak "help!";
+        }
+    }
+    return $new_mime_string;
 }
 
 sub _mime_data {
@@ -254,6 +277,7 @@ sub _attach_file {
         'Content-Disposition'=>
             "form-data; name=\"$params{name}\"; filename=\"$params{file}\"",
         Data=>$params{value},
+        Encoding=>'binary',
     );
     if ($params{type}) {
         $attach{Type} = $params{type};

@@ -11,7 +11,7 @@ use autodie qw(open close);
 Readonly my $PETS => ['Rex','Oscar','Bidgie','Fish'];
 
 my @cgi_modules = Utils::get_cgi_modules;
-plan tests => 7+3*@cgi_modules;
+plan tests => 37; #7+3*@cgi_modules;
 
 my $tcm = Test::CGI::Multipart->new;
 isa_ok($tcm, 'Test::CGI::Multipart');
@@ -36,14 +36,17 @@ is_deeply(\@names, ['first_name','pets'], 'names deep');
 
 ok(!defined $tcm->upload_file(
         name=>'image',
+        width=>400,
+        height=>250,
+        instructions=>[
+            ['bgcolor','red'],
+            ['fgcolor','blue'],
+            ['rectangle',30,30,100,100],
+            ['moveTo',80,210],
+            ['fontsize',20],
+            ['string','Helloooooooooooo world!'],
+        ],
         file=>'cleopatra.doc',
-        width=>1000,
-        height=>1000,
-        font=>'Times:italic',
-        bgcolor=>'red',
-        fgcolor=>'blue',
-        fontsize=>20,
-        string=>'Cleopatra',
         type=>'image/jpeg'
 ), 'image');
 @names= sort $tcm->get_names;
@@ -74,6 +77,7 @@ foreach my $class (@cgi_modules) {
             is($got->[0]->{type}, $expected->[0]->{type}, 'type');
             is($got->[0]->{name}, $expected->[0]->{name}, 'name');
             is($got->[0]->{file}, $expected->[0]->{file}, 'file');
+            is(substr($got->[0]->{value},0,100), substr($expected->[0]->{value},0,100), 'value');
             open my $fh, '>', '/home/nicholas/a.txt';
             print {$fh} $got->[0]->{value};
             close $fh;
