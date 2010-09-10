@@ -58,10 +58,11 @@ Readonly my $CODE_SPEC => {
 };
 
 # MIME parsing states
-Readonly my $HEADER_STATE => 0;
-Readonly my $BOUNDARY_STATE => 1;
-Readonly my $BETWEEN_STATE => 2;
-Readonly my $DATA_STATE=> 3;
+Readonly my $TYPE_STATE => 0;
+Readonly my $HEADER_STATE => 1;
+Readonly my $BOUNDARY_STATE => 2;
+Readonly my $BETWEEN_STATE => 3;
+Readonly my $DATA_STATE=> 4;
 
 sub new {
     my $class = shift;
@@ -169,14 +170,50 @@ sub create_cgi {
     return $cgi;
 }
 
+# Function to replace \n with CRLF
+# However we must distinguish between data 
+# and real new lines.
+# Hence state.
 sub _normalize {
     my $self = shift;
     my $mime_string = shift;
     my $new_mime_string = "";
     pos $mime_string = 0;
-    my $state = $HEADER_STATE;
+    my $state = $TYPE_STATE;
+    # start -> TYPE_STATE
+    # TYPE_STATE -> HEADER_STATE
+    # HEADER_STATE -> HEADER_STATE | BETWEEN_STATE
+    # BETWEEN_STATE -> DATA_STATE 
+    # DATA_STATE -> DATA_STATE, BOUNDARY_STATE
+    # BOUNDARY_STATE -> TYPE_STATE, end
+    my @boundaries;
     while(pos $mime_string < length $mime_string) {
-        if ($mime_string =~ m{\G([^\n]*)\n}xmsgc) {
+        if ($state == $TYPE_STATE) {
+            if ($mime_string =~ m{
+                                \G             # Pick up where we left it
+                                (              # start of capture
+                                    Content\-Type:
+                                    \s+
+                                    multipart/form-data;
+                                    \s+
+                                    boundary="
+                                    ([-_=\d]+)
+                                    "
+                                )\n}xmsgc) {
+                my $line = $1;
+                my $boundary = $2;
+                push @boundaries, $boundary;
+                $state = $HEADER_STATE;
+                $new_mime_string .= "$line\015\012";
+            }
+            elsif ($mime_string =~ m{\G(.{0,10})}xmsgc) {
+                croak "$state: $1";
+            }
+            else {
+                croak "Help!";
+            }               
+        }   
+        elsif ($mime_string =~ m{\G([^\n]*)\n}xmsgc) {
             $new_mime_string .= "$1\015\012";
         }
         elsif ($mime_string =~ m{\G([^\n]+)\z}xmsgc) {
