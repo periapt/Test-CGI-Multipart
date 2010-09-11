@@ -12,7 +12,7 @@ use AddValue;
 Readonly my $PETS => ['Rex','Oscar','Bidgie','Fish'];
 
 my @cgi_modules = Utils::get_cgi_modules;
-plan tests => 12+6*@cgi_modules;
+plan tests => 13+6*@cgi_modules;
 
 my $tcm = Test::CGI::Multipart->new;
 isa_ok($tcm, 'Test::CGI::Multipart');
@@ -51,7 +51,7 @@ foreach my $class (@cgi_modules) {
 SKIP: {
 
     if (defined $class and $class eq 'CGI::Simple') {
-        skip 'CGI::Simple apparently does not support multiple files', 5;
+        skip 'CGI::Simple apparently does not support multiple files', 6;
     }
 
     if ($class) {
