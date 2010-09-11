@@ -148,8 +148,6 @@ sub create_cgi {
     my $mime = $self->_mime_data;
     my $mime_str = $mime->stringify;
     my $mime_string = $self->_normalize1($mime_str);
-#    $mime_str =~ s{\n}{\015\012}xmsg;
-#    croak "Help!!!!" unless $mime_str eq $mime_string;
     my $boundary = $mime->head->multipart_boundary;
 
     $ENV{REQUEST_METHOD}='POST';
@@ -179,131 +177,6 @@ sub _normalize1 {
     $mime_string =~ s{\n([\w-]+:\s+)}{$EOL$1}xmsg;
     $mime_string =~ s{\n(-------)}{$EOL$1}xmsg;
     return $mime_string;
-}
-
-# Function to replace \n with CRLF
-# However we must distinguish between data 
-# and real new lines.
-# Hence state.
-# If MIME::Entity handled CRLF correctly would not need this.
-# I have also looked at MIME::Fast and MIME::Lite.
-sub _normalize {
-    my $self = shift;
-    my $mime_string = shift;
-    my $new_mime_string = "";
-    pos $mime_string = 0;
-    my $state = $TYPE_STATE;
-    # start -> TYPE_STATE
-    # TYPE_STATE -> HEADER_STATE
-    # HEADER_STATE -> HEADER_STATE | DATA_STATE
-    # DATA_STATE -> DATA_STATE | TYPE_STATE | end
-    my @boundaries;
-    while(pos $mime_string < length $mime_string) {
-        if ($state == $TYPE_STATE) {
-            if ($mime_string =~ m{
-                                \G             # Pick up where we left it
-                                (              # start of capture
-                                    Content\-Type:
-                                    \s+
-                                    multipart/form-data;
-                                    \s+
-                                    boundary="
-                                    ([-_=\d]+)
-                                    "
-                                )\n}xmsgc) {
-                my $line = $1;
-                my $boundary = $2;
-                push @boundaries, $boundary;
-                $state = $HEADER_STATE;
-                $new_mime_string .= "$line\015\012";
-            }
-            elsif ($mime_string =~ m{
-                                \G             # Pick up where we left it
-                                (              # start of capture
-                                    Content\-Type:
-                                    \s+
-                                    [^\n]+
-                                )\n}xmsgc) {
-                my $line = $1;
-                $state = $HEADER_STATE;
-                $new_mime_string .= "$line\015\012";
-            }
-            elsif ($mime_string =~ m{\G(.{0,10})}xmsgc) {
-                croak "$state: $1";
-            }
-            else {
-                croak "Help!";
-            }               
-        }   
-        elsif ($state == $HEADER_STATE) {
-            if ($mime_string =~ m{
-                                \G             # Pick up where we left it
-                                (              # start of capture
-                                    [\w-]+:
-                                    \s+
-                                    [^\n]+
-                                )\n}xmsgc) {
-                my $line = $1;
-                $new_mime_string .= "$line\015\012";
-            }
-            elsif ($mime_string =~ m{
-                                \G
-                                \n}xmsgc) {
-                $state = $DATA_STATE;
-                $new_mime_string .= "\015\012";
-            }
-            elsif ($mime_string =~ m{\G(.{0,10})}xmsgc) {
-                croak "$state: $1";
-            }
-            else {
-                croak "Help!";
-            }               
-        }
-        elsif ($state == $DATA_STATE) {
-            my $boundary = pop @boundaries;
-            if ($mime_string =~ m{
-                                \G
-                                (--$boundary(?:--)?)
-                                \n}xmsgc) {
-                my $line = $1;
-                $new_mime_string .= "$line\015\012";
-                $state = $TYPE_STATE;
-                push @boundaries, $boundary;
-            }
-            elsif ($mime_string =~ m{
-                                \G
-                                ([^\n]*)
-                                \n
-                                (--$boundary(?:--)?)
-                                \n
-                                }xmsgc) {
-                my $line = $1;
-                my $boundary_line = $2;
-                $new_mime_string .= "$line\015\012$boundary_line\015\012";
-                push @boundaries, $boundary;
-            }
-            elsif ($mime_string =~ m{
-                                \G
-                                ([^\n]*)
-                                \n
-                                }xmsgc) {
-                my $line = $1;
-                $new_mime_string .= "$line\n";
-                push @boundaries, $boundary;
-            }
-            elsif ($mime_string =~ m{\G(.{0,10})}xmsgc) {
-                croak "$state: $1";
-            }
-            else {
-                croak "Help!";
-            }               
-            
-        }
-        else {
-            croak "help!";
-        }
-    }
-    return $new_mime_string;
 }
 
 sub _mime_data {
@@ -626,6 +499,12 @@ Please report any bugs or feature requests to
 C<bug-test-cgi-multipart@rt.cpan.org>, or through the web interface at
 L<http://rt.cpan.org>.
 
+This module depends upon L<MIME::Tools>. Unfortuately this module
+does not handle newlines quite correctly. That seems to work fine for
+email but does not work with L<CGI>. I  have looked at  L<MIME::Fast>
+and L<MIME::Lite> but L<MIME::Tools> combined with a hack seems the best
+that can be done at the moment. Sooner or later someone is going to hit 
+the limitations of that hack.
 
 =head1 AUTHOR
 
