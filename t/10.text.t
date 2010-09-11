@@ -20,7 +20,7 @@ Readonly my $NAMES => ['first_name', 'paragraphs', 'pets', 'sentences', 'uninter
 Readonly my $PARAGRAPH => qq{Reprehenderit similique a accusamus neque ad quaerat. Iusto temporibus consequuntur vitae earum accusantium sequi eum sequi. Debitis et voluptatem ipsam assumenda odit assumenda.\n\nOmnis velit est non quas. Iusto est in harum laudantium harum eos sapiente. Ducimus quia tenetur ea. Aut tenetur maiores in et voluptatem. Et veritatis tenetur delectus repellendus aut sunt veniam sapiente.};
 
 my @cgi_modules = Utils::get_cgi_modules;
-plan tests => 19+(2+scalar @$NAMES)*@cgi_modules;
+plan tests => 22+(2+scalar @$NAMES)*@cgi_modules;
 
 my $tcm = Test::CGI::Multipart->new;
 isa_ok($tcm, 'Test::CGI::Multipart');
@@ -89,6 +89,28 @@ throws_ok {$tcm->upload_file(
     file=>'paragraphs.txt',
     type=>'text/plain',
 )} qr/No words, sentences or paragraphs specified/, 'inadequately specified';
+
+throws_ok {$tcm->upload_file(
+    name=>'paragraphs',
+    file=>'paragraphs.txt',
+    type=>'text/plain',
+    words=>'twenty',
+)} qr/No words, sentences or paragraphs specified/, 'inadequately specified';
+
+throws_ok {$tcm->upload_file(
+    name=>'paragraphs',
+    file=>'paragraphs.txt',
+    type=>'application/blah',
+    words=>'twenty',
+)} qr/The following parameter was passed in the call to Test::CGI::Multipart::_upload_file but was not listed in the validation options: words/, 'wrong type';
+
+throws_ok {$tcm->upload_file(
+    name=>'paragraphs',
+    file=>'paragraphs.txt',
+    type=>'application/blah',
+    value=>'Hello world',
+    words=>'twenty',
+)} qr/The following parameter was passed in the call to Test::CGI::Multipart::_upload_file but was not listed in the validation options: words/, 'words and value specified';
 
 foreach my $class (@cgi_modules) {
 

@@ -505,7 +505,7 @@ Please report any bugs or feature requests to
 C<bug-test-cgi-multipart@rt.cpan.org>, or through the web interface at
 L<http://rt.cpan.org>.
 
-This module depends upon L<MIME::Tools>. Unfortunately this module
+This module depends upon L<MIME::Tools>. Unfortunately that module
 does not handle newlines quite correctly. That seems to work fine for
 email but does not work with L<CGI>. I  have looked at  L<MIME::Fast>
 and L<MIME::Lite> but L<MIME::Tools> combined with a hack seems the best
