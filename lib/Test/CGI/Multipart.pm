@@ -165,6 +165,12 @@ sub create_cgi {
     if ($params{cgi} eq 'CGI::Simple') {
         $CGI::Simple::DISABLE_UPLOADS = 0;
     }
+    if ($params{cgi} eq 'CGI') {
+        CGI::initialize_globals();
+    }
+    if ($params{cgi} eq 'CGI::Minimal') {
+        CGI::Minimal::reset_globals();
+    }
 
     my $cgi = $params{cgi}->new;
     return $cgi;
