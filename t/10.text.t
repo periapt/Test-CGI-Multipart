@@ -3,14 +3,13 @@ use strict;
 use warnings;
 use Test::More;
 use Test::CGI::Multipart;
-use Test::CGI::Multipart::Gen::Text;
 use Test::Exception;
 use Readonly;
 use lib qw(t/lib);
 use Utils;
 srand(0);
 
-eval {require Text::Lorem;};
+eval {require Test::CGI::Multipart::Gen::Text;};
 if ($@) {
     my $msg = "This test requires Text::Lorem";
     plan skip_all => $msg;

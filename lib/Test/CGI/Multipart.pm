@@ -431,10 +431,10 @@ This returns a list of stashed parameter names.
 
 =head2 upload_file
 
-In the abscence of any defined callbacks, this method takes three mandatory
+In the absence of any defined callbacks, this method takes three mandatory
 named parameters: C<name>, C<file> and C<value> and one optional parameter
 C<type>. If there are any callbacks then the parameters are passed through each
-of the callbacks and must meet the standard parmeter requirements by the time
+of the callbacks and must meet the standard parameter requirements by the time
 all the callbacks have been called.
 
 Unlike the C<set_param> method this will not override previous
@@ -499,7 +499,7 @@ Please report any bugs or feature requests to
 C<bug-test-cgi-multipart@rt.cpan.org>, or through the web interface at
 L<http://rt.cpan.org>.
 
-This module depends upon L<MIME::Tools>. Unfortuately this module
+This module depends upon L<MIME::Tools>. Unfortunately this module
 does not handle newlines quite correctly. That seems to work fine for
 email but does not work with L<CGI>. I  have looked at  L<MIME::Fast>
 and L<MIME::Lite> but L<MIME::Tools> combined with a hack seems the best

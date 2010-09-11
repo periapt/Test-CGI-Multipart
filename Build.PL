@@ -22,6 +22,7 @@ my $builder = Module::Build->new(
     },
     recommends => {
         'Text::Lorem' => 0,
+        'GD'=>0,
     },
     meta_merge => {
         resources => {

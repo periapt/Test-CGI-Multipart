@@ -14,6 +14,6 @@ if ( $@) {
    plan( skip_all => $msg );
 }
 
-Test::Prereq::Build::prereq_ok(undef, 'prereq', ['Test::Perl::Critic','Test::CheckChanges', 'Test::CheckManifest', 'Test::Spelling', 'Test::Prereq', 'Test::Prereq::Build', 'Utils']);
+Test::Prereq::Build::prereq_ok(undef, 'prereq', ['Test::Perl::Critic','Test::CheckChanges', 'Test::CheckManifest', 'Test::Spelling', 'Test::Prereq', 'Test::Prereq::Build', 'Utils', 'GD::Simple', 'Text::Lorem', 'AddParam', 'FilePop', 'AddValue']);
 
 

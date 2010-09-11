@@ -3,12 +3,17 @@ use strict;
 use warnings;
 use Test::More;
 use Test::CGI::Multipart;
-use Test::CGI::Multipart::Gen::Image;
 use Readonly;
 use lib qw(t/lib);
 use Utils;
 use autodie qw(open close);
 Readonly my $PETS => ['Rex','Oscar','Bidgie','Fish'];
+
+eval {require Test::CGI::Multipart::Gen::Image;};
+if ($@) {
+    my $msg = "This test requires GD::Simple";
+    plan skip_all => $msg;
+}
 
 my @cgi_modules = Utils::get_cgi_modules;
 plan tests => 9+5*@cgi_modules;

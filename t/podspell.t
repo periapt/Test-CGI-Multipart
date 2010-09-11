@@ -23,6 +23,9 @@ Test::Spelling::add_stopwords(qw(
                                     RT
                                     HASHREFs
                                     API
+                                    callback
+                                    callbacks
+                                    multipart
                                     param
                                     SQL
                                     DBI
