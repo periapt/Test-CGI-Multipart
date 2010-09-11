@@ -83,7 +83,7 @@ ok(!defined $tcm->upload_file(
 ), 'uploading other file');
 @names= sort $tcm->get_names;
 is_deeply(\@names, $NAMES);
-is_deeply(Utils::get_expected($tcm, 'paragraphs')->[0]->{value}, Utils::norm_eol($PARAGRAPH), 'paragraphs');
+is_deeply(Utils::get_expected($tcm, 'paragraphs')->[0]->{value}, $PARAGRAPH, 'paragraphs');
 
 throws_ok {$tcm->upload_file(
     name=>'paragraphs',

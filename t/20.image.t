@@ -11,7 +11,7 @@ use autodie qw(open close);
 Readonly my $PETS => ['Rex','Oscar','Bidgie','Fish'];
 
 my @cgi_modules = Utils::get_cgi_modules;
-plan tests => 37; #7+3*@cgi_modules;
+plan tests => 9+5*@cgi_modules;
 
 my $tcm = Test::CGI::Multipart->new;
 isa_ok($tcm, 'Test::CGI::Multipart');
@@ -74,23 +74,23 @@ foreach my $class (@cgi_modules) {
         my $got = undef;
         if (ref $expected->[0] eq 'HASH') {
             $got = Utils::get_actual_upload($cgi, $name);
-            is($got->[0]->{type}, $expected->[0]->{type}, 'type');
-            is($got->[0]->{name}, $expected->[0]->{name}, 'name');
-            is($got->[0]->{file}, $expected->[0]->{file}, 'file');
-            is(substr($got->[0]->{value},0,100), substr($expected->[0]->{value},0,100), 'value');
-            open my $fh, '>', '/home/nicholas/a.txt';
-            print {$fh} $got->[0]->{value};
-            close $fh;
-            open $fh, '>', '/home/nicholas/b.txt';
-            print {$fh} $expected->[0]->{value};
-            close $fh;
+#            is($got->[0]->{type}, $expected->[0]->{type}, 'type');
+#            is($got->[0]->{name}, $expected->[0]->{name}, 'name');
+#            is($got->[0]->{file}, $expected->[0]->{file}, 'file');
+#            is(substr($got->[0]->{value},0,100), substr($expected->[0]->{value},0,100), 'value');
+#            open my $fh, '>', '/home/nicholas/a.txt';
+#            print {$fh} $got->[0]->{value};
+#            close $fh;
+#            open $fh, '>', '/home/nicholas/b.txt';
+#            print {$fh} $expected->[0]->{value};
+#            close $fh;
         }
         else {
             my @got = $cgi->param($name);
             $got = \@got;
-            is_deeply($got, $expected);
+#            is_deeply($got, $expected);
         }
-        #is_deeply($got, $expected, $name);
+        is_deeply($got, $expected, $name);
     }
 
 }

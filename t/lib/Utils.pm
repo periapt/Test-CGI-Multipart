@@ -34,9 +34,9 @@ sub get_expected {
             if (!exists $e->{type}) {
                 $e->{type} = 'text/plain';
             }
-            if ($e->{type} eq 'text/plain') {
-                $e->{value} = norm_eol($e->{value});
-            }
+            #if ($e->{type} eq 'text/plain') {
+            #    $e->{value} = norm_eol($e->{value});
+            #}
         }
     }
     return \@expected;
@@ -56,7 +56,7 @@ sub get_actual_upload {
         foreach my $i (@0..$#fnames) {
             push @got, {
                 file=>$fnames[$i],
-                value=>norm_eol($data[$i]),
+                value=>$data[$i],
                 type=>$types[$i],
                 name=>$name
             }
@@ -72,7 +72,7 @@ sub get_actual_upload {
                 my $type = $cgi->upload_info($file, 'mime');
                 push @got, {
                     file=>$file,
-                    value=>norm_eol($data),
+                    value=>$data,
                     type=>$type,
                     name=>$name
                 };
@@ -94,7 +94,7 @@ sub get_actual_upload {
                 my $type = $cgi->uploadInfo($file)->{'Content-Type'};
                 push @got, {
                     file=>$file,
-                    value=>norm_eol($data),
+                    value=>$data,
                     type=>$type,
                     name=>$name
                 };

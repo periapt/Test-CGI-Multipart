@@ -61,6 +61,7 @@ Readonly my $CODE_SPEC => {
 Readonly my $TYPE_STATE => 0;
 Readonly my $HEADER_STATE => 1;
 Readonly my $DATA_STATE=> 2;
+Readonly my $EOL => "\015\012";
 
 sub new {
     my $class = shift;
@@ -145,7 +146,10 @@ sub create_cgi {
     my %params = validate(@_, {cgi=>$CGI_SPEC, ua=>$UA_SPEC});
 
     my $mime = $self->_mime_data;
-    my $mime_string = $self->_normalize($mime->stringify);
+    my $mime_str = $mime->stringify;
+    my $mime_string = $self->_normalize1($mime_str);
+#    $mime_str =~ s{\n}{\015\012}xmsg;
+#    croak "Help!!!!" unless $mime_str eq $mime_string;
     my $boundary = $mime->head->multipart_boundary;
 
     $ENV{REQUEST_METHOD}='POST';
@@ -166,6 +170,15 @@ sub create_cgi {
 
     my $cgi = $params{cgi}->new;
     return $cgi;
+}
+
+sub _normalize1 {
+    my $self = shift;
+    my $mime_string = shift;
+    $mime_string =~ s{([\w-]+:\s+[^\n]+)\n\n}{$1$EOL$EOL}xmsg;
+    $mime_string =~ s{\n([\w-]+:\s+)}{$EOL$1}xmsg;
+    $mime_string =~ s{\n(-------)}{$EOL$1}xmsg;
+    return $mime_string;
 }
 
 # Function to replace \n with CRLF
@@ -260,7 +273,20 @@ sub _normalize {
             elsif ($mime_string =~ m{
                                 \G
                                 ([^\n]*)
-                                \n}xmsgc) {
+                                \n
+                                (--$boundary(?:--)?)
+                                \n
+                                }xmsgc) {
+                my $line = $1;
+                my $boundary_line = $2;
+                $new_mime_string .= "$line\015\012$boundary_line\015\012";
+                push @boundaries, $boundary;
+            }
+            elsif ($mime_string =~ m{
+                                \G
+                                ([^\n]*)
+                                \n
+                                }xmsgc) {
                 my $line = $1;
                 $new_mime_string .= "$line\n";
                 push @boundaries, $boundary;
