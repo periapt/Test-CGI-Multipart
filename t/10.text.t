@@ -107,8 +107,8 @@ throws_ok {$tcm->upload_file(
 throws_ok {$tcm->upload_file(
     name=>'paragraphs',
     file=>'paragraphs.txt',
-    type=>'application/blah',
     value=>'Hello world',
+    type=>'text/plain',
     words=>'twenty',
 )} qr/The following parameter was passed in the call to Test::CGI::Multipart::_upload_file but was not listed in the validation options: words/, 'words and value specified';
 
