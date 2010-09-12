@@ -19,6 +19,7 @@ my $builder = Module::Build->new(
         'CGI'   => 0,
         'Readonly' => 0,
         'Params::Validate'=>0,
+        'Perl6::Slurp'=>0,
     },
     recommends => {
         'Text::Lorem' => 0,

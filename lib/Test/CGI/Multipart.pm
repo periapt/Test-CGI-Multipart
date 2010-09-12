@@ -8,7 +8,7 @@ use Params::Validate qw(:all);
 use MIME::Entity;
 use Readonly;
 
-use version; our $VERSION = qv('0.0.1');
+use version; our $VERSION = qv('0.0.2');
 
 # Module implementation here
 
@@ -304,7 +304,7 @@ Test::CGI::Multipart - Test posting of multi-part form data
 
 =head1 VERSION
 
-This document describes Test::CGI::Multipart version 0.0.1
+This document describes Test::CGI::Multipart version 0.0.2
 
 =head1 SYNOPSIS
 
