@@ -9,7 +9,7 @@ use MIME::Entity;
 use Readonly;
 require 5.006_001; # we use 3-arg open in places
 
-use version; our $VERSION = qv('0.0.2');
+use version; our $VERSION = qv('0.0.3');
 
 # Module implementation here
 
@@ -305,7 +305,7 @@ Test::CGI::Multipart - Test posting of multi-part form data
 
 =head1 VERSION
 
-This document describes Test::CGI::Multipart version 0.0.2
+This document describes Test::CGI::Multipart version 0.0.3
 
 =head1 SYNOPSIS
 

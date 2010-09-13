@@ -18,7 +18,7 @@ my $builder = Module::Build->new(
         'autodie'=>0,
         'version'    => 0,
         'UNIVERSAL::require' => 0,
-        'CGI'   => 0,
+        'CGI'   => '3.41',
         'Readonly' => 0,
         'Params::Validate'=>0,
     },

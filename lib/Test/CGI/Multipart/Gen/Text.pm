@@ -8,7 +8,7 @@ use Test::CGI::Multipart;
 use Text::Lorem;
 use Scalar::Util qw(looks_like_number);
 
-use version; our $VERSION = qv('0.0.2');
+use version; our $VERSION = qv('0.0.3');
 
 # Module implementation here
 
@@ -53,7 +53,7 @@ Test::CGI::Multipart::Gen::Text - Generate text test data for multipart forms
 
 =head1 VERSION
 
-This document describes Test::CGI::Multipart::Gen::Text version 0.0.2
+This document describes Test::CGI::Multipart::Gen::Text version 0.0.3
 
 
 =head1 SYNOPSIS

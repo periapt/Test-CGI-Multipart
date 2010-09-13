@@ -7,7 +7,7 @@ use Readonly;
 use Test::CGI::Multipart;
 use GD::Simple;
 
-use version; our $VERSION = qv('0.0.2');
+use version; our $VERSION = qv('0.0.3');
 
 # Module implementation here
 
@@ -73,7 +73,7 @@ Test::CGI::Multipart::Gen::Image - Generate image test data for multipart forms
 
 =head1 VERSION
 
-This document describes Test::CGI::Multipart::Gen::Image version 0.0.2
+This document describes Test::CGI::Multipart::Gen::Image version 0.0.3
 
 
 =head1 SYNOPSIS
