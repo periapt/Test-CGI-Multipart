@@ -82,9 +82,9 @@ This document describes Test::CGI::Multipart::Gen::Text version 0.0.2
   
 =head1 DESCRIPTION
 
-    This is a callback package for L<Test::CGI::Multipart> that facilitates 
-    the testing of the upload of text files of a given size and sample content.
-    It generates random text using L<Text::Lorem>.
+This is a callback package for L<Test::CGI::Multipart> that facilitates 
+the testing of the upload of text files of a given size and sample content.
+It generates random text using L<Text::Lorem>.
 
 =head1 INTERFACE 
 

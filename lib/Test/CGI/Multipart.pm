@@ -339,24 +339,24 @@ This document describes Test::CGI::Multipart version 0.0.2
   
 =head1 DESCRIPTION
 
-    It is quite difficult to write test code to capture the behaviour 
-    of CGI or similar objects handling forms that include a file upload.
-    Such code needs to harvest the parameters, build file content in MIME
-    format, set the environment variables accordingly and pump it into the 
-    the standard input of the required CGI object. This module provides
-    simple methods so that having prepared suitable content, the test script
-    can simulate the submission of webforms including file uploads.
+It is quite difficult to write test code to capture the behaviour 
+of CGI or similar objects handling forms that include a file upload.
+Such code needs to harvest the parameters, build file content in MIME
+format, set the environment variables accordingly and pump it into the 
+the standard input of the required CGI object. This module provides
+simple methods so that having prepared suitable content, the test script
+can simulate the submission of webforms including file uploads.
 
-    However we also recognize that a test script is not always the best place
-    to prepare content. Rather a test script would rather specify requirements
-    for a file a upload: type, size, mismatches between the file name and its
-    contents and so on. This module cannot hope to provide such open ended
-    functionality but it can provide extension mechanisms.
+However we also recognize that a test script is not always the best place
+to prepare content. Rather a test script would rather specify requirements
+for a file a upload: type, size, mismatches between the file name and its
+contents and so on. This module cannot hope to provide such open ended
+functionality but it can provide extension mechanisms.
 
-    This module works with L<CGI> (the default), L<CGI::Minimal> and 
-    L<CGI::Simple>. In principle it ought to work with all equivalent modules
-    however each module has a slightly different interface when it comes
-    to file uploads and so requires slightly different test code.
+This module works with L<CGI> (the default), L<CGI::Minimal> and 
+L<CGI::Simple>. In principle it ought to work with all equivalent modules
+however each module has a slightly different interface when it comes
+to file uploads and so requires slightly different test code.
 
 =head1 INTERFACE 
 
@@ -413,6 +413,8 @@ input and the MIME content is pushed through the pipe.
 =item The appropriate CGI class is required.
 
 =item Uploads are enabled if the CGI class is L<CGI::Simple>.
+
+=iten Global variables are reset for L<CGI> and L<CGI::Minimal>.
 
 =item The CGI object is created and returned.
 
