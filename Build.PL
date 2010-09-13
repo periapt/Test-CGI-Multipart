@@ -10,8 +10,10 @@ my $builder = Module::Build->new(
     build_requires => {
         'Test::More' => 0,
         'Test::Exception' => 0,
+        'Perl6::Slurp'=>0,
     },
     requires => {
+        'perl'=>'5.6.1',
         'MIME::Entity'=>0,
         'autodie'=>0,
         'version'    => 0,
@@ -19,7 +21,6 @@ my $builder = Module::Build->new(
         'CGI'   => 0,
         'Readonly' => 0,
         'Params::Validate'=>0,
-        'Perl6::Slurp'=>0,
     },
     recommends => {
         'Text::Lorem' => 0,

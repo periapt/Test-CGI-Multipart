@@ -7,6 +7,7 @@ use UNIVERSAL::require;
 use Params::Validate qw(:all);
 use MIME::Entity;
 use Readonly;
+require 5.006_001; # we use 3-arg open in places
 
 use version; our $VERSION = qv('0.0.2');
 
