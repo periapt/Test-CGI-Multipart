@@ -29,7 +29,7 @@ my $builder = Module::Build->new(
     meta_merge => {
         resources => {
             repository =>
-                'http://github.com/periapt/Test-CGI-Multipart/tree',
+                'http://github.com/periapt/Test-CGI-Multipart',
         },
         keywords => [ 'Test', 'CGI', 'upload', 'image', 'multipart/form-data' ],
     },
